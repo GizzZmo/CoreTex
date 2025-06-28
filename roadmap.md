@@ -20,7 +20,7 @@ Milepæl: En bruker kan logge inn med GitHub, og applikasjonen har et gyldig tok
 Fase 2: Repository og datastruktur (Uke 28: 7. juli - 13. juli 2025)
 Mål: Definere og håndtere datastrukturen i et dedikert GitHub-repository.
 
-Oppgaver:
+## Oppgaver:
 
 UI for repository-valg: Utvikle funksjonalitet som lar brukeren velge et eksisterende repository eller opprette et nytt, for eksempel cortex-database, direkte fra CORTEX-grensesnittet.
 
@@ -41,7 +41,7 @@ Milepæl: CORTEX kan lese og tolke data fra et spesifisert GitHub-repository for
 Fase 3: Datalagring (Committing) (Uke 29: 14. juli - 20. juli 2025)
 Mål: Gjøre det mulig å lagre all applikasjonsdata tilbake til GitHub-repositoryet.
 
-Oppgaver:
+## Oppgaver:
 
 Erstatte "Eksporter"-knapper: Fjerne de lokale eksport-knappene og erstatte dem med en enkelt "Synkroniser til GitHub"-knapp.
 
@@ -62,7 +62,7 @@ Milepæl: Alle endringer gjort i CORTEX (nye fjes, logghendelser) blir påliteli
 Fase 4: UI/UX-integrasjon og testing (Uke 30: 21. juli - 27. juli 2025)
 Mål: Sikre at hele GitHub-integrasjonen er intuitiv og feilfri for brukeren.
 
-Oppgaver:
+## Oppgaver:
 
 Visuell feedback: Gi brukeren tydelig visuell status på synkronisering (f.eks. ikoner eller tekst som viser "Synkroniserer...", "Oppdatert", "Synkronisering feilet").
 
@@ -72,4 +72,4 @@ Logg ut-funksjon: Implementere en "Logg ut fra GitHub"-knapp som sletter tokenet
 
 Ende-til-ende-testing: Gjennomføre grundig testing av hele arbeidsflyten: innlogging, valg av repo, gjøre endringer, synkronisere, restarte appen og verifisere at dataene er lastet korrekt.
 
-Milepæl: CORTEX 6.0 er funksjonelt komplett med en robust og brukervennlig GitHub-integrasjon.
+# Milepæl: CORTEX 6.0 er funksjonelt komplett med en robust og brukervennlig GitHub-integrasjon.
