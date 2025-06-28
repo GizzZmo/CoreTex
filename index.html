@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <!-- 
 Chosen Palette: Cyberpunk Neon (Primary: #00ffcc, Secondary: #ff00ff, Background: #0a0c10)
-Application Structure Plan: This version fixes a bug where the loading overlay would not disappear, making the application seem inactive. The missing `video.addEventListener('play', ...)` has been restored.
+Application Structure Plan: This version upgrades the "Rafael" protocol to analyze a sequence of images instead of a single frame, enabling true movement analysis.
 Visualization & Content Choices: 
-- Feature: Bug Fix. Goal: Ensure the application becomes active after loading. Viz/Presentation: No visual changes, but the loading screen now correctly disappears. Interaction: The `play` event on the video element now correctly triggers the removal of the loading overlay and starts the detection loop. Justification: Fixes a critical UI bug that prevented any user interaction after the initial load.
+- Feature: Sequential Image Analysis for Rafael Protocol. Goal: Provide accurate movement and flow analysis. Viz/Presentation: The Rafael modal remains the same, but the UI provides feedback during the multi-frame capture process. Interaction: Clicking the "RAFAEL" button now triggers a helper function to capture 3 frames over 1.5 seconds. This array of images is sent to the Gemini API with a new prompt instructing it to analyze the sequence. Justification: Directly addresses the user's valid point that movement analysis requires sequential data, making the feature far more powerful and accurate.
 - All other components are maintained.
 CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
 -->
@@ -14,7 +14,7 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
     
     <title>CORTEX Anomaly Detector | Cyberpunk Ansiktsgjenkjenning</title>
     <meta name="description" content="En cyberpunk-inspirert ansiktsgjenkjenning-app som bruker en full suite av AI-funksjoner, inkludert 'Gabriel' og 'Rafael' beskyttelsesprotokoller.">
-    <meta name="keywords" content="ansiktsgjenkjenning, adferdsanalyse, AI, kunstig intelligens, cyberpunk, CORTEX, webkamera, sanntid, javascript, biometri, face-api.js, Gemini, Imagen, json, chatbot, api key, tolerance, recommendation, Gabriel, Rafael">
+    <meta name="keywords" content="ansiktsgjenkjenning, adferdsanalyse, AI, kunstig intelligens, cyberpunk, CORTEX, webkamera, sanntid, javascript, biometri, face-api.js, Gemini, Imagen, json, chatbot, api key, tolerance, recommendation, Gabriel, Rafael, sequence">
     <meta name="author" content="Gemini AI">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -101,7 +101,7 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
                 <button id="save-unknown-btn" class="cyber-button py-2 uppercase text-sm" disabled>⬇️ EKSPORTER UKJENTE</button>
             </div>
              <div class="mt-auto text-center text-xs text-gray-500 pt-4">
-                <p>CORTEX v5.8 | Tech Stack: HTML, Tailwind, face-api.js, Gemini API, Imagen</p>
+                <p>CORTEX v5.9 | Tech Stack: HTML, Tailwind, face-api.js, Gemini API, Imagen</p>
             </div>
         </div>
 
@@ -151,7 +151,7 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
 
     <!-- Modals -->
     <div id="modal-backdrop" class="hidden fixed inset-0 flex justify-center items-center bg-[rgba(0,0,0,0.9)] z-40">
-         <div class="modal bg-[var(--background-color)] border-2 border-[var(--secondary-color)] p-8 shadow-[0_0_15px_var(--secondary-color)] text-center">
+        <div class="modal bg-[var(--background-color)] border-2 border-[var(--secondary-color)] p-8 shadow-[0_0_15px_var(--secondary-color)] text-center">
             <h2 class="text-2xl text-[var(--secondary-color)] cyber-shadow-secondary mb-4">REGISTRER NYTT INDIVID</h2>
             <p class="mb-4">Skriv inn navn på individet:</p>
             <input type="text" id="name-input" placeholder="Navn..." class="bg-[#222] border border-[var(--primary-color)] text-[var(--primary-color)] p-2 w-full mb-4 font-mono">
@@ -159,7 +159,7 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
         </div>
     </div>
     <div id="report-modal-backdrop" class="hidden fixed inset-0 flex justify-center items-center bg-[rgba(0,0,0,0.9)] z-40 p-4">
-         <div class="modal bg-[var(--background-color)] border-2 border-[var(--secondary-color)] p-8 shadow-[0_0_15px_var(--secondary-color)] text-center w-full max-w-2xl max-h-[80vh] flex flex-col">
+        <div class="modal bg-[var(--background-color)] border-2 border-[var(--secondary-color)] p-8 shadow-[0_0_15px_var(--secondary-color)] text-center w-full max-w-2xl max-h-[80vh] flex flex-col">
             <h2 class="text-2xl text-[var(--secondary-color)] cyber-shadow-secondary mb-4">ANALYSERAPPORT</h2>
             <div id="report-content" class="text-left overflow-y-auto flex-grow bg-black/30 p-4 text-sm/relaxed"></div>
             <button id="close-report-btn" class="cyber-button w-full py-2 uppercase mt-4">LUKK</button>
@@ -290,10 +290,13 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
 
             const createLoader = (text = 'Prosesserer...') => `<div class="flex flex-col items-center justify-center h-full"><div class="spinner"></div><p class="mt-4">${text}</p></div>`;
             
-            async function callGeminiAPI(prompt, base64ImageData = null, schema = null) {
+            async function callGeminiAPI(prompt, images = [], schema = null) {
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${userApiKey}`;
                 const parts = [{ text: prompt }];
-                if (base64ImageData) parts.push({ inline_data: { mime_type: "image/jpeg", data: base64ImageData } });
+                images.forEach(imgData => {
+                    parts.push({ inline_data: { mime_type: "image/jpeg", data: imgData } });
+                });
+
                 const payload = { contents: [{ parts }] };
                 if (schema) payload.generationConfig = { response_mime_type: "application/json", response_schema: schema };
                 const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -305,35 +308,51 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
                     return responseText;
                 } else { throw new Error("Fikk tomt eller uventet svar fra AI."); }
             }
-             // --- FIX: Restored full function body ---
+            
+            async function captureFrameSequence(count = 3, delay = 500) {
+                const frames = [];
+                for (let i = 0; i < count; i++) {
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = video.videoWidth;
+                    tempCanvas.height = video.videoHeight;
+                    tempCanvas.getContext('2d').drawImage(video, 0, 0);
+                    frames.push(tempCanvas.toDataURL('image/jpeg').split(',')[1]);
+                    if (i < count - 1) {
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    }
+                }
+                return frames;
+            }
+
+            // --- FIX: Restored full function definitions ---
             async function generateAndDisplayReport() {
                 if (!checkApiKey()) return;
                 reportContent.innerHTML = createLoader();
                 reportModal.classList.remove('hidden');
                 const prompt = `Du er en sikkerhetsanalytiker for CORTEX-systemet. Skriv en kort, profesjonell skiftrapport basert på følgende data. Formater svaret med Markdown. **Nåværende status:** - Antall kjente individer: ${knownFaceDescriptors.length}. - Antall unike ukjente individer fanget: ${unknownFaceDescriptors.length}. **Siste 10 logghendelser:** ${Array.from(logList.querySelectorAll('li')).slice(0, 10).map(li => li.textContent).join('\n')}. **Din oppgave:** 1. Start med overskriften "Skiftrapport". 2. Oppsummer aktiviteten. 3. Nevn om ukjente individer er observert. 4. Avslutt med en statusvurdering.`;
                 try {
-                    const responseText = await callGeminiAPI(prompt, null, null);
+                    const responseText = await callGeminiAPI(prompt, []);
                     reportContent.innerHTML = responseText.replace(/# (.+)/g, '<h3>$1</h3>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\* (.+)/g, '<li>$1</li>').replace(/(\n)/g, '<br>');
                 } catch (error) {
                     reportContent.innerHTML = `<p class="text-[var(--danger-color)]">FEIL: Kunne ikke koble til Gemini. <br><br>${error.message}</p>`;
                 }
             }
-            
+
             function toggleImagenButton(show) {
-                 if (imagenBtn) {
-                    imagenBtn.remove();
-                    imagenBtn = null;
+                if (imagenBtn) {
+                   imagenBtn.remove();
+                   imagenBtn = null;
                 }
-                if (show && userApiKey) {
-                    imagenBtn = document.createElement('button');
-                    imagenBtn.id = 'generate-sketch-btn';
-                    imagenBtn.className = 'cyber-button py-2 uppercase text-sm';
-                    imagenBtn.innerHTML = '🖼️ GENERER FANTOMBILDE';
-                    imagenBtn.onclick = () => imagenModal.classList.remove('hidden');
-                    controlsGrid.appendChild(imagenBtn);
-                }
-            }
-            
+               if (show && userApiKey) {
+                   imagenBtn = document.createElement('button');
+                   imagenBtn.id = 'generate-sketch-btn';
+                   imagenBtn.className = 'cyber-button py-2 uppercase text-sm';
+                   imagenBtn.innerHTML = '🖼️ GENERER FANTOMBILDE';
+                   imagenBtn.onclick = () => imagenModal.classList.remove('hidden');
+                   controlsGrid.appendChild(imagenBtn);
+               }
+           }
+
             async function getAnomalyExplanation(analysisData) {
                 anomalyExplanationEl.innerHTML = createLoader('Henter risikovurdering...');
                 anomalyExplanationEl.classList.remove('hidden');
@@ -381,7 +400,7 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
                 const schema = { type: "OBJECT", properties: { emotion: { type: "STRING" }, confidence: { type: "NUMBER" }, attire_color: { type: "STRING" }, held_objects: { type: "ARRAY", items: { type: "STRING" } }, assessment: { type: "STRING" }}, required: ["emotion", "confidence", "attire_color", "held_objects", "assessment"] };
 
                 try {
-                    const data = await callGeminiAPI(prompt, base64ImageData, schema);
+                    const data = await callGeminiAPI(prompt, [base64ImageData], schema);
                     let objectsList = data.held_objects.length > 0 ? data.held_objects.join(', ') : 'Ingen';
                     behaviorContent.innerHTML = `<ul class="text-left space-y-2"><li><strong>Vurdering:</strong> <span class="text-[var(--primary-color)]">${data.assessment || 'N/A'}</span></li><li><strong>Emosjonell tilstand:</strong> ${data.emotion || 'N/A'} (Konfidens: ${Math.round((data.confidence || 0) * 100)}%)</li><li><strong>Farge på antrekk:</strong> ${data.attire_color || 'N/A'}</li><li><strong>Objekter i hånd:</strong> ${objectsList}</li></ul>`;
                     addLog('Subjektanalyse (JSON) fullført.', 'known');
@@ -398,9 +417,58 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
                     addLog('Subjektanalyse (JSON) feilet kritisk.', 'anomaly');
                 }
             }
+            
+            async function callImagenAPI(prompt) {
+                if (!checkApiKey()) return;
+                addLog('Kaller på Imagen for bildegenerering...', 'system');
+                imagenDisplay.innerHTML = createLoader('Genererer bilde...');
+                const payload = { instances: [{ prompt: `fotorealistisk portrett av en person, ${prompt}` }], parameters: { "sampleCount": 1 } };
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${userApiKey}`;
+                try {
+                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!response.ok) throw new Error(`Imagen API feilet: ${response.status} ${await response.text()}`);
+                    const result = await response.json();
+                    if (result.predictions?.[0]?.bytesBase64Encoded) {
+                        const imageUrl = `data:image/png;base64,${result.predictions[0].bytesBase64Encoded}`;
+                        imagenDisplay.innerHTML = `<img src="${imageUrl}" class="w-full h-full object-contain">`;
+                        addLog('Fantombilde generert.', 'known');
+                    } else { throw new Error("Uventet svarformat fra Imagen."); }
+                } catch(error) {
+                    addLog(`FEIL ved bildegenerering: ${error.message}`, 'anomaly');
+                    imagenDisplay.innerHTML = `<span class="text-[var(--danger-color)]">Kunne ikke generere bilde.</span>`;
+                }
+            }
+
+            function displayChatMessage(message, sender) {
+                const messageEl = document.createElement('div');
+                messageEl.classList.add(sender === 'user' ? 'chat-user' : 'chat-assistant');
+                messageEl.innerHTML = message;
+                chatHistoryEl.appendChild(messageEl);
+                chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
+            }
+
+            async function handleChatQuery(query) {
+                if (!checkApiKey()) return;
+                displayChatMessage(query, 'user');
+                const thinkingEl = document.createElement('div');
+                thinkingEl.classList.add('chat-assistant');
+                thinkingEl.innerText = 'Tenker...';
+                chatHistoryEl.appendChild(thinkingEl);
+                chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
+                const logContext = Array.from(logList.querySelectorAll('li')).slice(0, 30).map(li => li.textContent).join('\n');
+                const prompt = `Du er CORTEX-assistenten, en AI innebygd i et overvåkingssystem. Svar på operatørens spørsmål kort og presist basert på systemloggene du får oppgitt.\n\nSYSTEMLOGGER:\n${logContext}\n\nOPERATØRENS SPØRSMÅL: "${query}"\n\nDITT SVAR:`;
+                try {
+                    const response = await callGeminiAPI(prompt, []);
+                    thinkingEl.remove();
+                    displayChatMessage(response.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\* (.+)/g, '<li>$1</li>').replace(/(\n)/g, '<br>'), 'assistant');
+                } catch (error) {
+                    thinkingEl.remove();
+                    displayChatMessage(`<span class="text-[var(--danger-color)]">Systemfeil i assistent-modul: ${error.message}</span>`, 'assistant');
+                }
+            }
 
             function runGabrielProtocol() {
-                protocolTitle.innerText = 'PROTOKOLL GABRIEL: INFORMASJONSINTEGRITET';
+                 protocolTitle.innerText = 'PROTOKOLL GABRIEL: INFORMASJONSINTEGRITET';
                 protocolContent.innerHTML = createLoader('Verifiserer database...');
                 protocolModal.classList.remove('hidden');
                 if (knownFaceDescriptors.length === 0) {
@@ -424,22 +492,19 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
             async function runRafaelProtocol() {
                 if (!checkApiKey()) return;
                 protocolTitle.innerText = 'PROTOKOLL RAFAEL: TRANSPORTANALYSE';
-                protocolContent.innerHTML = createLoader('Analyserer bevegelsesmønstre...');
+                protocolContent.innerHTML = createLoader('Fanger bildesekvens...');
                 protocolModal.classList.remove('hidden');
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = video.videoWidth;
-                tempCanvas.height = video.videoHeight;
-                tempCanvas.getContext('2d').drawImage(video, 0, 0);
-                const base64ImageData = tempCanvas.toDataURL('image/jpeg').split(',')[1];
-                const prompt = `Du er AI-protokoll RAFAEL. Analyser bildet fra overvåkingskameraet. Gi en kort, punktliste-basert vurdering av:\n- **Flyt:** Er bevegelsen i bildet jevn eller hindret?\n- **Tetthet:** Er det unormalt høy tetthet av personer noe sted?\n- **Mønster:** Ser du noen uvanlige samlinger eller bevegelser?\n- **Konklusjon:** Gi en overordnet status (f.eks., "NORMAL FLYT", "POTENSIELL FLASKEHALS DETEKTERT").`;
+                const imageSequence = await captureFrameSequence(3, 500);
+                protocolContent.innerHTML = createLoader('Analyserer sekvens...');
+                const prompt = `Du er AI-protokoll RAFAEL. Du har mottatt en sekvens på ${imageSequence.length} bilder tatt over et kort tidsrom. Analyser bevegelsen og flyten **mellom bildene**. Gi en kort, punktliste-basert vurdering av:\n- **Flyt:** Er bevegelsen i scenen jevn, stillestående eller kaotisk?\n- **Tetthet:** Endrer tettheten av personer seg? Oppstår det unormale samlinger?\n- **Mønster:** Identifiser hovedretningen på bevegelsen. Er det noen som beveger seg mot strømmen eller på en uventet måte?\n- **Konklusjon:** Gi en overordnet status (f.eks., "NORMAL FLYT", "POTENSIELL FLASKEHALS DETEKTERT", "UNORMAL SAMLING").`;
                  try {
-                    const responseText = await callGeminiAPI(prompt, base64ImageData);
+                    const responseText = await callGeminiAPI(prompt, imageSequence);
                     protocolContent.innerHTML = responseText.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\* (.+)/g, '<li class="ml-4 list-disc">$1</li>').replace(/(\n)/g, '<br>');
                 } catch (error) {
                     protocolContent.innerHTML = `<p class="text-[var(--danger-color)]">FEIL under transportanalyse: ${error.message}</p>`;
                 }
             }
-
+            
             function updateFaceMatcher() { 
                 const tolerance = parseFloat(toleranceSlider.value);
                 if (knownFaceDescriptors.length > 0) { 
