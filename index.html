@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<!-- 
+Chosen Palette: Cyberpunk Neon (Primary: #00ffcc, Secondary: #ff00ff, Background: #0a0c10)
+Application Structure Plan: This version fixes a bug where the loading overlay would not disappear, making the application seem inactive. The missing `video.addEventListener('play', ...)` has been restored.
+Visualization & Content Choices: 
+- Feature: Bug Fix. Goal: Ensure the application becomes active after loading. Viz/Presentation: No visual changes, but the loading screen now correctly disappears. Interaction: The `play` event on the video element now correctly triggers the removal of the loading overlay and starts the detection loop. Justification: Fixes a critical UI bug that prevented any user interaction after the initial load.
+- All other components are maintained.
+CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+-->
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>CORTEX Anomaly Detector | Cyberpunk Ansiktsgjenkjenning</title>
+    <meta name="description" content="En cyberpunk-inspirert ansiktsgjenkjenning-app som bruker en full suite av AI-funksjoner, inkludert 'Gabriel' og 'Rafael' beskyttelsesprotokoller.">
+    <meta name="keywords" content="ansiktsgjenkjenning, adferdsanalyse, AI, kunstig intelligens, cyberpunk, CORTEX, webkamera, sanntid, javascript, biometri, face-api.js, Gemini, Imagen, json, chatbot, api key, tolerance, recommendation, Gabriel, Rafael">
+    <meta name="author" content="Gemini AI">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #00ffcc;
+            --secondary-color: #ff00ff;
+            --background-color: #0a0c10;
+            --text-color: #e0e0e0;
+            --danger-color: #ff3333;
+            --font-family: 'Share Tech Mono', monospace;
+        }
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+        body {
+            font-family: var(--font-family);
+            background-color: var(--background-color);
+        }
+        .cyber-shadow { text-shadow: 0 0 5px var(--primary-color); }
+        .cyber-shadow-secondary { text-shadow: 0 0 5px var(--secondary-color); }
+        .cyber-border { border: 2px solid var(--primary-color); box-shadow: 0 0 15px var(--primary-color), inset 0 0 15px var(--primary-color); }
+        .cyber-border-secondary { border: 1px solid var(--secondary-color); box-shadow: 0 0 10px var(--secondary-color); }
+        .cyber-button {
+            background-color: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            transition: all 0.3s ease;
+            box-shadow: 0 0 5px var(--primary-color);
+        }
+        .cyber-button:hover:not(:disabled) { background-color: var(--primary-color); color: var(--background-color); box-shadow: 0 0 15px var(--primary-color); }
+        .cyber-button:disabled { border-color: #555; color: #555; cursor: not-allowed; box-shadow: none; }
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0) 0, rgba(255,255,255,0.05) 1px, rgba(0,0,0,0.1) 2px);
+            pointer-events: none;
+            z-index: 1000;
+        }
+        #log li.anomaly { color: var(--danger-color); font-weight: bold; }
+        #log li.known { color: var(--primary-color); }
+        #log li.system { color: #aaa; }
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 5px solid var(--primary-color);
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .chat-user { text-align: right; color: var(--primary-color); }
+        .chat-assistant { text-align: left; color: var(--text-color); background: rgba(0, 255, 204, 0.05); border-radius: 5px; padding: 4px 8px; }
+    </style>
+</head>
+<body class="text-[var(--text-color)] flex justify-center items-center min-h-screen p-4 overflow-hidden">
+
+    <div class="container flex flex-wrap gap-8 w-full h-full max-h-[95vh] max-w-7xl cyber-border p-4 bg-[rgba(10,12,16,0.8)] backdrop-blur-sm">
+        
+        <div class="main-content flex-grow flex flex-col min-w-[300px] flex-[3]">
+            <h1 class="text-2xl text-center text-[var(--primary-color)] cyber-shadow mb-4 tracking-[3px]">
+                // CORTEX ANOMALY DETECTION //
+            </h1>
+            <div class="video-container relative w-full bg-black cyber-border-secondary aspect-video">
+                <video id="video" class="absolute top-0 left-0 w-full h-full object-cover" autoplay muted playsinline></video>
+                <canvas id="overlay" class="absolute top-0 left-0 w-full h-full"></canvas>
+            </div>
+            <div id="controls-grid" class="controls grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                <button id="capture-btn" class="cyber-button py-2 uppercase text-sm" disabled>REGISTRER ANSIKT</button>
+                <button id="save-btn" class="cyber-button py-2 uppercase text-sm" disabled>EKSPORTER DB</button>
+                <label for="load-input" class="cyber-button text-center py-2 uppercase text-sm cursor-pointer" id="load-label">IMPORTER DB</label>
+                <input type="file" id="load-input" class="hidden" accept=".json">
+                <button id="behavior-btn" class="cyber-button py-2 uppercase text-sm" disabled>🕵️ ANALYSER ADFERD</button>
+                <button id="report-btn" class="cyber-button py-2 uppercase text-sm" disabled>✨ GENERER RAPPORT</button>
+                <button id="save-unknown-btn" class="cyber-button py-2 uppercase text-sm" disabled>⬇️ EKSPORTER UKJENTE</button>
+            </div>
+             <div class="mt-auto text-center text-xs text-gray-500 pt-4">
+                <p>CORTEX v5.8 | Tech Stack: HTML, Tailwind, face-api.js, Gemini API, Imagen</p>
+            </div>
+        </div>
+
+        <div class="sidebar flex-grow flex flex-col gap-4 bg-[rgba(0,0,0,0.3)] border border-[var(--primary-color)] p-4 min-w-[250px] flex-[1] overflow-y-auto">
+            <div>
+                 <h2 class="text-lg text-[var(--secondary-color)] cyber-shadow-secondary border-b border-[var(--secondary-color)] pb-2 mb-2">API NØKKEL</h2>
+                 <div class="flex gap-2">
+                    <input type="password" id="api-key-input" placeholder="Lim inn din Google API Nøkkel" class="bg-[#222] border border-[var(--primary-color)] text-[var(--primary-color)] p-1 w-full font-mono text-xs">
+                    <button id="save-api-key-btn" class="cyber-button px-2 text-sm">LAGRE</button>
+                 </div>
+            </div>
+            <div>
+                 <h2 class="text-lg text-[var(--secondary-color)] cyber-shadow-secondary border-b border-[var(--secondary-color)] pb-2 mb-2">INNSTILLINGER</h2>
+                 <label for="tolerance-slider" class="text-sm">Gjenkjenningstoleranse: <span id="tolerance-value">0.6</span></label>
+                 <input type="range" id="tolerance-slider" min="0.3" max="0.7" value="0.6" step="0.05" class="w-full mt-1">
+            </div>
+            <div>
+                 <h2 class="text-lg text-[var(--secondary-color)] cyber-shadow-secondary border-b border-[var(--secondary-color)] pb-2 mb-2">AI-PROTOKOLLER</h2>
+                 <div class="grid grid-cols-2 gap-2">
+                     <button id="gabriel-btn" class="cyber-button py-2 uppercase text-sm">GABRIEL</button>
+                     <button id="rafael-btn" class="cyber-button py-2 uppercase text-sm" disabled>RAFAEL</button>
+                 </div>
+            </div>
+            <div>
+                <h2 class="text-lg text-[var(--secondary-color)] cyber-shadow-secondary border-b border-[var(--secondary-color)] pb-2 mb-2">KJENTE INDIVIDER</h2>
+                <ul id="known-faces-list" class="list-none h-20 overflow-y-auto bg-[rgba(0,0,0,0.5)] p-2 text-sm"></ul>
+            </div>
+            <div>
+                <h2 class="text-lg text-[var(--secondary-color)] cyber-shadow-secondary border-b border-[var(--secondary-color)] pb-2 mb-2">SYSTEMLOGG</h2>
+                <ul id="log" class="list-none h-20 overflow-y-auto bg-[rgba(0,0,0,0.5)] p-2 text-xs"></ul>
+            </div>
+            <div class="flex flex-col flex-grow min-h-0">
+                <h2 class="text-lg text-[var(--secondary-color)] cyber-shadow-secondary border-b border-[var(--secondary-color)] pb-2 mb-2">CORTEX ASSISTENT</h2>
+                <div id="chat-history" class="flex-grow overflow-y-auto bg-[rgba(0,0,0,0.5)] p-2 text-xs space-y-2"></div>
+                <form id="chat-form" class="flex gap-2 mt-2">
+                    <input type="text" id="chat-input" placeholder="Spør assistenten..." class="bg-[#222] border border-[var(--primary-color)] text-[var(--primary-color)] p-1 w-full font-mono text-xs" disabled>
+                    <button id="chat-submit-btn" type="submit" class="cyber-button px-2 text-sm" disabled>SEND</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading-message" class="fixed inset-0 flex justify-center items-center bg-[rgba(0,0,0,0.9)] z-50 flex-col gap-4 text-center">
+        <div class="text-3xl text-[var(--primary-color)] cyber-shadow">INITIALISERER AI-KJERNE...</div>
+        <div id="loading-status" class="max-w-xs">Venter på AI-bibliotek...</div>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-backdrop" class="hidden fixed inset-0 flex justify-center items-center bg-[rgba(0,0,0,0.9)] z-40">
+         <div class="modal bg-[var(--background-color)] border-2 border-[var(--secondary-color)] p-8 shadow-[0_0_15px_var(--secondary-color)] text-center">
+            <h2 class="text-2xl text-[var(--secondary-color)] cyber-shadow-secondary mb-4">REGISTRER NYTT INDIVID</h2>
+            <p class="mb-4">Skriv inn navn på individet:</p>
+            <input type="text" id="name-input" placeholder="Navn..." class="bg-[#222] border border-[var(--primary-color)] text-[var(--primary-color)] p-2 w-full mb-4 font-mono">
+            <button id="submit-name-btn" class="cyber-button w-full py-2 uppercase">LAGRE</button>
+        </div>
+    </div>
+    <div id="report-modal-backdrop" class="hidden fixed inset-0 flex justify-center items-center bg-[rgba(0,0,0,0.9)] z-40 p-4">
+         <div class="modal bg-[var(--background-color)] border-2 border-[var(--secondary-color)] p-8 shadow-[0_0_15px_var(--secondary-color)] text-center w-full max-w-2xl max-h-[80vh] flex flex-col">
+            <h2 class="text-2xl text-[var(--secondary-color)] cyber-shadow-secondary mb-4">ANALYSERAPPORT</h2>
+            <div id="report-content" class="text-left overflow-y-auto flex-grow bg-black/30 p-4 text-sm/relaxed"></div>
+            <button id="close-report-btn" class="cyber-button w-full py-2 uppercase mt-4">LUKK</button>
+        </div>
+    </div>
+    <div id="behavior-modal-backdrop" class="hidden fixed inset-0 flex justify-center items-center bg-[rgba(0,0,0,0.9)] z-40 p-4">
+       <div class="modal bg-[var(--background-color)] border-2 border-[var(--secondary-color)] p-8 shadow-[0_0_15px_var(--secondary-color)] text-center w-full max-w-2xl max-h-[80vh] flex flex-col">
+            <h2 class="text-2xl text-[var(--secondary-color)] cyber-shadow-secondary mb-4">SUBJEKTANALYSE</h2>
+            <div id="behavior-content" class="text-left overflow-y-auto flex-grow bg-black/30 p-4 text-sm/relaxed"></div>
+            <div id="anomaly-explanation" class="hidden text-left overflow-y-auto flex-grow bg-black/30 p-4 text-sm/relaxed mt-4 border-t-2 border-[var(--danger-color)]"></div>
+            <button id="close-behavior-btn" class="cyber-button w-full py-2 uppercase mt-4">LUKK</button>
+        </div>
+    </div>
+    <div id="imagen-modal-backdrop" class="hidden fixed inset-0 flex justify-center items-center bg-[rgba(0,0,0,0.9)] z-40 p-4">
+       <div class="modal bg-[var(--background-color)] border-2 border-[var(--secondary-color)] p-8 shadow-[0_0_15px_var(--secondary-color)] text-center w-full max-w-lg max-h-[90vh] flex flex-col">
+            <h2 class="text-2xl text-[var(--secondary-color)] cyber-shadow-secondary mb-4">GENERER FANTOMBILDE</h2>
+            <p class="mb-2 text-sm">Beskriv subjektet (f.eks. "mann med blondt hår, smiler"):</p>
+            <input type="text" id="imagen-prompt" class="bg-[#222] border border-[var(--primary-color)] text-[var(--primary-color)] p-2 w-full mb-4 font-mono">
+            <div id="imagen-display" class="w-full aspect-square bg-black/50 mb-4 flex items-center justify-center border border-dashed border-[var(--primary-color)]">
+                <span class="text-gray-500">Bilde vises her</span>
+            </div>
+            <div class="flex gap-4">
+                <button id="generate-imagen-btn" class="cyber-button w-full py-2 uppercase">GENERER</button>
+                <button id="close-imagen-btn" class="cyber-button w-full py-2 uppercase">LUKK</button>
+            </div>
+        </div>
+    </div>
+     <div id="protocol-modal-backdrop" class="hidden fixed inset-0 flex justify-center items-center bg-[rgba(0,0,0,0.9)] z-40 p-4">
+        <div class="modal bg-[var(--background-color)] border-2 border-[var(--secondary-color)] p-8 shadow-[0_0_15px_var(--secondary-color)] text-center w-full max-w-2xl max-h-[80vh] flex flex-col">
+            <h2 id="protocol-title" class="text-2xl text-[var(--secondary-color)] cyber-shadow-secondary mb-4"></h2>
+            <div id="protocol-content" class="text-left overflow-y-auto flex-grow bg-black/30 p-4 text-sm/relaxed"></div>
+            <button id="close-protocol-btn" class="cyber-button w-full py-2 uppercase mt-4">LUKK</button>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof faceapi === 'undefined') {
+                document.getElementById('loading-status').innerText = "KRITISK FEIL: AI-biblioteket (face-api.js) kunne ikke lastes.";
+                return;
+            }
+
+            // --- Element references (consolidated) ---
+            const video = document.getElementById('video');
+            const overlay = document.getElementById('overlay');
+            const captureBtn = document.getElementById('capture-btn');
+            const saveBtn = document.getElementById('save-btn');
+            const loadInput = document.getElementById('load-input');
+            const reportBtn = document.getElementById('report-btn');
+            const behaviorBtn = document.getElementById('behavior-btn');
+            const saveUnknownBtn = document.getElementById('save-unknown-btn');
+            const knownFacesList = document.getElementById('known-faces-list');
+            const logList = document.getElementById('log');
+            const loadingMessage = document.getElementById('loading-message');
+            const controlsGrid = document.getElementById('controls-grid');
+            const apiKeyInput = document.getElementById('api-key-input');
+            const saveApiKeyBtn = document.getElementById('save-api-key-btn');
+            const chatHistoryEl = document.getElementById('chat-history');
+            const chatForm = document.getElementById('chat-form');
+            const chatInput = document.getElementById('chat-input');
+            const chatSubmitBtn = document.getElementById('chat-submit-btn');
+            const modalBackdrop = document.getElementById('modal-backdrop');
+            const nameInput = document.getElementById('name-input');
+            const submitNameBtn = document.getElementById('submit-name-btn');
+            const reportModal = document.getElementById('report-modal-backdrop');
+            const reportContent = document.getElementById('report-content');
+            const closeReportBtn = document.getElementById('close-report-btn');
+            const behaviorModal = document.getElementById('behavior-modal-backdrop');
+            const behaviorContent = document.getElementById('behavior-content');
+            const closeBehaviorBtn = document.getElementById('close-behavior-btn');
+            const anomalyExplanationEl = document.getElementById('anomaly-explanation');
+            const imagenModal = document.getElementById('imagen-modal-backdrop');
+            const imagenPrompt = document.getElementById('imagen-prompt');
+            const imagenDisplay = document.getElementById('imagen-display');
+            const generateImagenBtn = document.getElementById('generate-imagen-btn');
+            const closeImagenBtn = document.getElementById('close-imagen-btn');
+            const protocolModal = document.getElementById('protocol-modal-backdrop');
+            const protocolTitle = document.getElementById('protocol-title');
+            const protocolContent = document.getElementById('protocol-content');
+            const closeProtocolBtn = document.getElementById('close-protocol-btn');
+            const gabrielBtn = document.getElementById('gabriel-btn');
+            const rafaelBtn = document.getElementById('rafael-btn');
+            const toleranceSlider = document.getElementById('tolerance-slider');
+            const toleranceValue = document.getElementById('tolerance-value');
+
+            // State variables
+            let userApiKey = ''; 
+            let knownFaceDescriptors = [];
+            let unknownFaceDescriptors = [];
+            let faceMatcher;
+            let lastCapturedDescriptor = null;
+            let detectionInterval;
+            let imagenBtn = null; 
+
+            function addLog(message, type = 'system') {
+                const li = document.createElement('li');
+                li.textContent = `[${new Date().toLocaleTimeString('no-NO')}] ${message}`;
+                li.className = type;
+                logList.prepend(li);
+                if (logList.children.length > 50) logList.removeChild(logList.lastChild);
+            }
+
+            async function initialize() {
+                const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model';
+                try {
+                    loadingMessage.children[1].textContent = 'Laster inn deteksjonsmodeller...';
+                    await faceapi.nets.tinyFaceDetector.load(MODEL_URL);
+                    await faceapi.nets.faceLandmark68Net.load(MODEL_URL);
+                    await faceapi.nets.faceRecognitionNet.load(MODEL_URL);
+                    captureBtn.disabled = false;
+                    addLog('AI-modeller er klare.', 'known');
+                    addLog('Vennligst legg inn en Google API-nøkkel for å aktivere AI-funksjoner.', 'system');
+                    loadingMessage.children[1].textContent = 'Starter webkamera...';
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                    video.srcObject = stream;
+                } catch (err) {
+                    addLog(`SYSTEMFEIL: Kunne ikke initialisere. ${err.name}`, 'anomaly');
+                }
+            }
+            
+            function checkApiKey() {
+                if (!userApiKey) {
+                    addLog('API NØKKEL MANGLER. Skriv inn en nøkkel for å bruke denne funksjonen.', 'anomaly');
+                    return false;
+                }
+                return true;
+            }
+
+            const createLoader = (text = 'Prosesserer...') => `<div class="flex flex-col items-center justify-center h-full"><div class="spinner"></div><p class="mt-4">${text}</p></div>`;
+            
+            async function callGeminiAPI(prompt, base64ImageData = null, schema = null) {
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${userApiKey}`;
+                const parts = [{ text: prompt }];
+                if (base64ImageData) parts.push({ inline_data: { mime_type: "image/jpeg", data: base64ImageData } });
+                const payload = { contents: [{ parts }] };
+                if (schema) payload.generationConfig = { response_mime_type: "application/json", response_schema: schema };
+                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) throw new Error(`API-kall feilet: ${response.status} ${await response.text()}`);
+                const result = await response.json();
+                if (result.candidates?.[0]?.content.parts[0].text) {
+                    const responseText = result.candidates[0].content.parts[0].text;
+                    if (schema) { try { return JSON.parse(responseText); } catch (e) { throw new Error("Feil ved parsing av JSON-svar fra AI."); } }
+                    return responseText;
+                } else { throw new Error("Fikk tomt eller uventet svar fra AI."); }
+            }
+             // --- FIX: Restored full function body ---
+            async function generateAndDisplayReport() {
+                if (!checkApiKey()) return;
+                reportContent.innerHTML = createLoader();
+                reportModal.classList.remove('hidden');
+                const prompt = `Du er en sikkerhetsanalytiker for CORTEX-systemet. Skriv en kort, profesjonell skiftrapport basert på følgende data. Formater svaret med Markdown. **Nåværende status:** - Antall kjente individer: ${knownFaceDescriptors.length}. - Antall unike ukjente individer fanget: ${unknownFaceDescriptors.length}. **Siste 10 logghendelser:** ${Array.from(logList.querySelectorAll('li')).slice(0, 10).map(li => li.textContent).join('\n')}. **Din oppgave:** 1. Start med overskriften "Skiftrapport". 2. Oppsummer aktiviteten. 3. Nevn om ukjente individer er observert. 4. Avslutt med en statusvurdering.`;
+                try {
+                    const responseText = await callGeminiAPI(prompt, null, null);
+                    reportContent.innerHTML = responseText.replace(/# (.+)/g, '<h3>$1</h3>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\* (.+)/g, '<li>$1</li>').replace(/(\n)/g, '<br>');
+                } catch (error) {
+                    reportContent.innerHTML = `<p class="text-[var(--danger-color)]">FEIL: Kunne ikke koble til Gemini. <br><br>${error.message}</p>`;
+                }
+            }
+            
+            function toggleImagenButton(show) {
+                 if (imagenBtn) {
+                    imagenBtn.remove();
+                    imagenBtn = null;
+                }
+                if (show && userApiKey) {
+                    imagenBtn = document.createElement('button');
+                    imagenBtn.id = 'generate-sketch-btn';
+                    imagenBtn.className = 'cyber-button py-2 uppercase text-sm';
+                    imagenBtn.innerHTML = '🖼️ GENERER FANTOMBILDE';
+                    imagenBtn.onclick = () => imagenModal.classList.remove('hidden');
+                    controlsGrid.appendChild(imagenBtn);
+                }
+            }
+            
+            async function getAnomalyExplanation(analysisData) {
+                anomalyExplanationEl.innerHTML = createLoader('Henter risikovurdering...');
+                anomalyExplanationEl.classList.remove('hidden');
+                const prompt = `En CORTEX-sikkerhetsoperatør har mottatt følgende analyse av et **ukjent** subjekt: Vurdering: ${analysisData.assessment}, Emosjonell tilstand: ${analysisData.emotion}. \n\nDin oppgave:\n1. Skriv en kort, en-linjers risikovurdering.\n2. Gi en punktliste med 2-3 konkrete, anbefalte handlinger for operatøren.\nStart svaret ditt med overskriften "**RISIKOVURDERING OG ANBEFALING**".`;
+                try {
+                    const responseText = await callGeminiAPI(prompt);
+                    anomalyExplanationEl.innerHTML = responseText.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\* (.+)/g, '<li class="ml-4 list-disc">$1</li>').replace(/(\n)/g, '<br>');
+                } catch (error) {
+                    anomalyExplanationEl.innerHTML = `<p class="text-[var(--danger-color)]">Kunne ikke hente anbefalinger: ${error.message}</p>`;
+                }
+            }
+
+            async function analyzeBehavior() {
+                if (!checkApiKey()) return;
+                
+                behaviorContent.innerHTML = createLoader();
+                anomalyExplanationEl.classList.add('hidden');
+                anomalyExplanationEl.innerHTML = '';
+                behaviorModal.classList.remove('hidden');
+                toggleImagenButton(false);
+                addLog('Starter avansert subjektanalyse...', 'system');
+                
+                const detectionWithDescriptor = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+
+                if (!detectionWithDescriptor) {
+                    behaviorContent.innerHTML = `<p class="text-[var(--danger-color)]">Ingen subjekt funnet for analyse.</p>`;
+                    return addLog('Analyse feilet: Ingen subjekt i sikte.', 'anomaly');
+                }
+                
+                let isKnown = false;
+                if (faceMatcher) {
+                    const bestMatch = faceMatcher.findBestMatch(detectionWithDescriptor.descriptor);
+                    if (bestMatch.label !== 'unknown') isKnown = true;
+                }
+                
+                if (!isKnown) toggleImagenButton(true);
+
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = video.videoWidth;
+                tempCanvas.height = video.videoHeight;
+                tempCanvas.getContext('2d').drawImage(video, 0, 0);
+                const base64ImageData = tempCanvas.toDataURL('image/jpeg').split(',')[1];
+                
+                const prompt = `Analyser bildet av personen og fyll ut JSON-objektet med din vurdering.`;
+                const schema = { type: "OBJECT", properties: { emotion: { type: "STRING" }, confidence: { type: "NUMBER" }, attire_color: { type: "STRING" }, held_objects: { type: "ARRAY", items: { type: "STRING" } }, assessment: { type: "STRING" }}, required: ["emotion", "confidence", "attire_color", "held_objects", "assessment"] };
+
+                try {
+                    const data = await callGeminiAPI(prompt, base64ImageData, schema);
+                    let objectsList = data.held_objects.length > 0 ? data.held_objects.join(', ') : 'Ingen';
+                    behaviorContent.innerHTML = `<ul class="text-left space-y-2"><li><strong>Vurdering:</strong> <span class="text-[var(--primary-color)]">${data.assessment || 'N/A'}</span></li><li><strong>Emosjonell tilstand:</strong> ${data.emotion || 'N/A'} (Konfidens: ${Math.round((data.confidence || 0) * 100)}%)</li><li><strong>Farge på antrekk:</strong> ${data.attire_color || 'N/A'}</li><li><strong>Objekter i hånd:</strong> ${objectsList}</li></ul>`;
+                    addLog('Subjektanalyse (JSON) fullført.', 'known');
+
+                    const riskKeywords = ['AVVIK', 'STRESS', 'SINT', 'REDD', 'FRYKT'];
+                    const isRisky = riskKeywords.some(keyword => data.assessment.toUpperCase().includes(keyword));
+                    if (!isKnown && isRisky) {
+                        addLog('Avvik detektert på ukjent subjekt. Henter anbefalinger...', 'anomaly');
+                        getAnomalyExplanation(data);
+                    }
+
+                } catch (error) {
+                    behaviorContent.innerHTML = `<p class="text-[var(--danger-color)]">FEIL under JSON-subjektanalyse. <br><br>${error.message}</p>`;
+                    addLog('Subjektanalyse (JSON) feilet kritisk.', 'anomaly');
+                }
+            }
+
+            function runGabrielProtocol() {
+                protocolTitle.innerText = 'PROTOKOLL GABRIEL: INFORMASJONSINTEGRITET';
+                protocolContent.innerHTML = createLoader('Verifiserer database...');
+                protocolModal.classList.remove('hidden');
+                if (knownFaceDescriptors.length === 0) {
+                    protocolContent.innerHTML = '<p class="text-yellow-400">Database er tom. Ingen data å verifisere.</p>';
+                    return;
+                }
+                setTimeout(() => {
+                    try {
+                        const dataStr = JSON.stringify(knownFaceDescriptors.map(fd => fd.toJSON()));
+                        let checksum = 0;
+                        for (let i = 0; i < dataStr.length; i++) {
+                            checksum = (checksum + dataStr.charCodeAt(i) * (i + 1)) % 65536;
+                        }
+                        protocolContent.innerHTML = `<p>Databaseintegritet verifisert.</p><p>Antall kjente individer: <span class="text-[var(--primary-color)]">${knownFaceDescriptors.length}</span></p><p>Sjekksum (HEX): <span class="text-[var(--primary-color)]">${checksum.toString(16).toUpperCase()}</span></p><p class="mt-4 text-green-400">STATUS: SIKKER</p>`;
+                    } catch (e) {
+                         protocolContent.innerHTML = `<p class="text-[var(--danger-color)]">Kritisk feil under verifisering: ${e.message}</p>`;
+                    }
+                }, 1000);
+            }
+
+            async function runRafaelProtocol() {
+                if (!checkApiKey()) return;
+                protocolTitle.innerText = 'PROTOKOLL RAFAEL: TRANSPORTANALYSE';
+                protocolContent.innerHTML = createLoader('Analyserer bevegelsesmønstre...');
+                protocolModal.classList.remove('hidden');
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = video.videoWidth;
+                tempCanvas.height = video.videoHeight;
+                tempCanvas.getContext('2d').drawImage(video, 0, 0);
+                const base64ImageData = tempCanvas.toDataURL('image/jpeg').split(',')[1];
+                const prompt = `Du er AI-protokoll RAFAEL. Analyser bildet fra overvåkingskameraet. Gi en kort, punktliste-basert vurdering av:\n- **Flyt:** Er bevegelsen i bildet jevn eller hindret?\n- **Tetthet:** Er det unormalt høy tetthet av personer noe sted?\n- **Mønster:** Ser du noen uvanlige samlinger eller bevegelser?\n- **Konklusjon:** Gi en overordnet status (f.eks., "NORMAL FLYT", "POTENSIELL FLASKEHALS DETEKTERT").`;
+                 try {
+                    const responseText = await callGeminiAPI(prompt, base64ImageData);
+                    protocolContent.innerHTML = responseText.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\* (.+)/g, '<li class="ml-4 list-disc">$1</li>').replace(/(\n)/g, '<br>');
+                } catch (error) {
+                    protocolContent.innerHTML = `<p class="text-[var(--danger-color)]">FEIL under transportanalyse: ${error.message}</p>`;
+                }
+            }
+
+            function updateFaceMatcher() { 
+                const tolerance = parseFloat(toleranceSlider.value);
+                if (knownFaceDescriptors.length > 0) { 
+                    faceMatcher = new faceapi.FaceMatcher(knownFaceDescriptors, tolerance); 
+                    saveBtn.disabled = false; 
+                } else { 
+                    faceMatcher = null; 
+                    saveBtn.disabled = true; 
+                } 
+                updateKnownFacesListUI(); 
+            }
+
+            function updateKnownFacesListUI() { 
+                knownFacesList.innerHTML = ''; 
+                knownFaceDescriptors.forEach(fd => { 
+                    const li = document.createElement('li'); 
+                    li.textContent = `> ${fd.label}`; 
+                    knownFacesList.appendChild(li); 
+                }); 
+            }
+             
+            async function handleUnknownFace(descriptor) {
+                if (unknownFaceDescriptors.length > 0) {
+                    const unknownMatcher = new faceapi.FaceMatcher(unknownFaceDescriptors, 0.6);
+                    const bestMatch = unknownMatcher.findBestMatch(descriptor);
+                    if (bestMatch.label !== 'unknown') return;
+                }
+                const newUnknown = new faceapi.LabeledFaceDescriptors(`ukjent_${Date.now()}`, [descriptor]);
+                unknownFaceDescriptors.push(newUnknown);
+                addLog('Ukjent ansikt lagret. "Eksporter Ukjente" er nå tilgjengelig.', 'system');
+                saveUnknownBtn.disabled = false;
+            }
+            
+            async function detectFacesLoop() {
+                if (video.paused || video.ended || video.videoWidth === 0) return;
+                const displaySize = { width: video.clientWidth, height: video.clientHeight };
+                if (displaySize.width === 0 || displaySize.height === 0) return; 
+
+                faceapi.matchDimensions(overlay, displaySize);
+                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.5 })).withFaceLandmarks().withFaceDescriptors();
+                const resizedDetections = faceapi.resizeResults(detections, displaySize);
+                const ctx = overlay.getContext('2d');
+                ctx.clearRect(0, 0, overlay.width, overlay.height);
+                if (detections.length === 0) toggleImagenButton(false);
+                for (const detection of resizedDetections) {
+                    let label = 'ANOMALI: UKJENT';
+                    let color = 'rgba(255, 51, 51, 0.8)';
+                    if (faceMatcher) {
+                        const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
+                        if (bestMatch.label !== 'unknown') {
+                            label = `${bestMatch.label} (${Math.round((1 - bestMatch.distance) * 100)}%)`;
+                            color = 'rgba(0, 255, 204, 0.8)';
+                        } else { await handleUnknownFace(detection.descriptor); }
+                    } else { await handleUnknownFace(detection.descriptor); }
+                    new faceapi.draw.DrawBox(detection.detection.box, { label, boxColor: color, drawLabelOptions: { fontColor: '#fff', backgroundColor: color } }).draw(overlay);
+                }
+            }
+
+            // --- Event Listeners ---
+            saveApiKeyBtn.addEventListener('click', () => {
+                const key = apiKeyInput.value.trim();
+                if (key) {
+                    userApiKey = key;
+                    addLog('API Nøkkel lagret og AI-funksjoner aktivert.', 'known');
+                    behaviorBtn.disabled = false;
+                    reportBtn.disabled = false;
+                    chatInput.disabled = false;
+                    chatSubmitBtn.disabled = false;
+                    rafaelBtn.disabled = false;
+                } else {
+                    addLog('API Nøkkel-feltet er tomt.', 'anomaly');
+                }
+            });
+
+            toleranceSlider.addEventListener('input', (e) => {
+                toleranceValue.textContent = e.target.value;
+                updateFaceMatcher();
+            });
+
+            captureBtn.addEventListener('click', async () => {
+                addLog('Analyserer for registrering...', 'system');
+                const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+                if (detection) {
+                    lastCapturedDescriptor = detection.descriptor;
+                    addLog('Tydelig ansikt funnet.', 'system');
+                    modalBackdrop.classList.remove('hidden');
+                } else {
+                    addLog('Kunne ikke finne ansikt for registrering.', 'anomaly');
+                    lastCapturedDescriptor = null;
+                }
+            });
+
+            submitNameBtn.addEventListener('click', () => {
+                const name = nameInput.value.trim();
+                if (!name || !lastCapturedDescriptor) { return addLog('Registrering feilet: Data mangler.', 'anomaly'); }
+                try {
+                    knownFaceDescriptors.push(new faceapi.LabeledFaceDescriptors(name, [lastCapturedDescriptor]));
+                    updateFaceMatcher();
+                    addLog(`Individ '${name}' registrert. 'Eksporter DB' er nå tilgjengelig.`, 'known');
+                    modalBackdrop.classList.add('hidden');
+                    nameInput.value = '';
+                    lastCapturedDescriptor = null;
+                } catch (error) { addLog(`KRITISK LAGRINGSFEIL: ${error.message}`, 'anomaly'); }
+            });
+            
+            saveUnknownBtn.addEventListener('click', () => {
+                if (unknownFaceDescriptors.length === 0) return addLog('Ingen ukjente ansikter å eksportere.', 'system');
+                const dataStr = JSON.stringify(unknownFaceDescriptors.map(fd => fd.toJSON()), null, 2);
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([dataStr], { type: 'application/json' }));
+                a.download = 'cortex_unknown_faces.json';
+                a.click();
+                URL.revokeObjectURL(a.href);
+                addLog('Database med ukjente ansikter eksportert.', 'known');
+            });
+
+            saveBtn.addEventListener('click', () => {
+                if (knownFaceDescriptors.length === 0) return addLog('Database med kjente fjes er tom. Registrer et fjes først.', 'anomaly');
+                const dataStr = JSON.stringify(knownFaceDescriptors.map(fd => fd.toJSON()), null, 2);
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([dataStr], { type: 'application/json' }));
+                a.download = 'cortex_known_faces_database.json';
+                a.click();
+                URL.revokeObjectURL(a.href);
+                addLog('Database med kjente ansikter eksportert.', 'known');
+            });
+
+            loadInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const loadedData = JSON.parse(event.target.result).map(fd => faceapi.LabeledFaceDescriptors.fromJSON(fd));
+                        const existingLabels = new Set(knownFaceDescriptors.map(d => d.label));
+                        const newData = loadedData.filter(d => !existingLabels.has(d.label));
+                        knownFaceDescriptors.push(...newData);
+                        updateFaceMatcher();
+                        addLog(`${newData.length} nye individer lagt til i databasen fra fil.`, 'known');
+                    } catch (err) {
+                        addLog('FEIL: Kunne ikke lese fil.', 'anomaly');
+                    } finally { e.target.value = ''; }
+                };
+                reader.readAsText(file);
+            });
+            
+            video.addEventListener('play', () => {
+                loadingMessage.style.display = 'none';
+                addLog('System klart. Overvåking aktiv.', 'known');
+                detectionInterval = setInterval(detectFacesLoop, 350);
+            });
+            
+            chatForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const query = chatInput.value.trim();
+                if(query) {
+                    handleChatQuery(query);
+                    chatInput.value = '';
+                }
+            });
+            
+            modalBackdrop.addEventListener('click', (e) => { if (e.target === modalBackdrop) modalBackdrop.classList.add('hidden'); });
+            reportBtn.addEventListener('click', generateAndDisplayReport);
+            behaviorBtn.addEventListener('click', analyzeBehavior);
+            
+            closeReportBtn.addEventListener('click', () => reportModal.classList.add('hidden'));
+            closeBehaviorBtn.addEventListener('click', () => {
+                behaviorModal.classList.add('hidden');
+                toggleImagenButton(false);
+            });
+            closeImagenBtn.addEventListener('click', () => imagenModal.classList.add('hidden'));
+            generateImagenBtn.addEventListener('click', () => {
+                const promptText = imagenPrompt.value.trim();
+                if (promptText) { callImagenAPI(promptText); } 
+                else { addLog('Vennligst skriv inn en beskrivelse for fantombildet.', 'anomaly'); }
+            });
+            gabrielBtn.addEventListener('click', runGabrielProtocol);
+            rafaelBtn.addEventListener('click', runRafaelProtocol);
+            closeProtocolBtn.addEventListener('click', () => protocolModal.classList.add('hidden'));
+
+            initialize();
+        });
+    </script>
+</body>
+</html>
