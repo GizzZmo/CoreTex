@@ -1,6 +1,4 @@
-# raodmap
-
-CORTEX 6.0 - Utviklingsplan for GitHub-integrasjon
+### CORTEX 6.0 - Utviklingsplan for GitHub-integrasjon
 Introduksjon
 Målet med CORTEX versjon 6.0 er å integrere systemet med GitHub for å muliggjøre persistent datalagring, versjonskontroll av databaser og logger, og fremtidig samarbeid. Dette flytter datahåndteringen fra midlertidige, lokale filer til en robust, skybasert løsning.
 
