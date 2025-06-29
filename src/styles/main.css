@@ -1,0 +1,60 @@
+/* main.css - Hovedstilarket for CORTEX */
+
+body {
+  background: #0f172a;
+  color: #f1f5f9;
+  font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+header,
+footer {
+  background: #134e4a;
+  color: #d1fae5;
+}
+
+h1, h2 {
+  color: #14b8a6;
+}
+
+.dashboard,
+.anomaly-log,
+.face-recognition {
+  background: #1e293b;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  padding: 1.5rem;
+}
+
+.language-switcher select {
+  background: #1e293b;
+  color: #67e8f9;
+  border: 1px solid #334155;
+  border-radius: 0.25rem;
+}
+
+video {
+  max-width: 100%;
+  border: 2px solid #134e4a;
+  border-radius: 0.5rem;
+}
+
+ul {
+  padding-left: 1.2rem;
+}
+
+li {
+  margin-bottom: 0.5rem;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  background: #0f172a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 6px;
+}
