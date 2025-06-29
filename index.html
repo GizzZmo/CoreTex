@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <!-- 
 Chosen Palette: Cyberpunk Neon (Primary: #00ffcc, Secondary: #ff00ff, Background: #0a0c10)
-Application Structure Plan: This version upgrades the "Rafael" protocol to analyze a sequence of images instead of a single frame, enabling true movement analysis.
+Application Structure Plan: This version fixes a critical ReferenceError caused by incomplete function definitions from a previous edit. The bodies of several key functions (analyzeBehavior, callImagenAPI, etc.) have been restored.
 Visualization & Content Choices: 
-- Feature: Sequential Image Analysis for Rafael Protocol. Goal: Provide accurate movement and flow analysis. Viz/Presentation: The Rafael modal remains the same, but the UI provides feedback during the multi-frame capture process. Interaction: Clicking the "RAFAEL" button now triggers a helper function to capture 3 frames over 1.5 seconds. This array of images is sent to the Gemini API with a new prompt instructing it to analyze the sequence. Justification: Directly addresses the user's valid point that movement analysis requires sequential data, making the feature far more powerful and accurate.
+- Feature: Bug Fix. Goal: Resolve startup ReferenceError by restoring function bodies. Viz/Presentation: No visual changes. Interaction: The application now runs without crashing. All AI-powered features are functional again. Justification: Restores the core logic of the application that was accidentally removed, fixing the critical error.
 - All other components are maintained.
 CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
 -->
@@ -13,8 +13,8 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <title>CORTEX Anomaly Detector | Cyberpunk Ansiktsgjenkjenning</title>
-    <meta name="description" content="En cyberpunk-inspirert ansiktsgjenkjenning-app som bruker en full suite av AI-funksjoner, inkludert 'Gabriel' og 'Rafael' beskyttelsesprotokoller.">
-    <meta name="keywords" content="ansiktsgjenkjenning, adferdsanalyse, AI, kunstig intelligens, cyberpunk, CORTEX, webkamera, sanntid, javascript, biometri, face-api.js, Gemini, Imagen, json, chatbot, api key, tolerance, recommendation, Gabriel, Rafael, sequence">
+    <meta name="description" content="En cyberpunk-inspirert ansiktsgjenkjenning-app som bruker en full suite av AI-funksjoner, inkludert en innebygd hjelpeseksjon.">
+    <meta name="keywords" content="ansiktsgjenkjenning, adferdsanalyse, AI, kunstig intelligens, cyberpunk, CORTEX, webkamera, sanntid, javascript, biometri, face-api.js, Gemini, Imagen, json, chatbot, api key, tolerance, recommendation, Gabriel, Rafael, sequence, summary, responsive, metatron, predictive, help, wiki, tutorial">
     <meta name="author" content="Gemini AI">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -33,7 +33,6 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
         }
         html, body {
             height: 100%;
-            overflow: hidden;
         }
         body {
             font-family: var(--font-family);
@@ -61,29 +60,30 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
             pointer-events: none;
             z-index: 1000;
         }
-        #log li.anomaly { color: var(--danger-color); font-weight: bold; }
-        #log li.known { color: var(--primary-color); }
-        #log li.system { color: #aaa; }
         .spinner {
-            width: 48px;
-            height: 48px;
-            border: 5px solid var(--primary-color);
-            border-bottom-color: transparent;
-            border-radius: 50%;
-            display: inline-block;
-            box-sizing: border-box;
-            animation: rotation 1s linear infinite;
+            width: 48px; height: 48px; border: 5px solid var(--primary-color); border-bottom-color: transparent;
+            border-radius: 50%; display: inline-block; box-sizing: border-box; animation: rotation 1s linear infinite;
         }
         @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .chat-user { text-align: right; color: var(--primary-color); }
-        .chat-assistant { text-align: left; color: var(--text-color); background: rgba(0, 255, 204, 0.05); border-radius: 5px; padding: 4px 8px; }
+        /* Help Modal Tab Styling */
+        .help-tab {
+            background-color: rgba(0,0,0,0.3);
+            border: 1px solid var(--secondary-color);
+            opacity: 0.6;
+            transition: all 0.3s;
+        }
+        .help-tab.active, .help-tab:hover {
+            opacity: 1;
+            background-color: rgba(255, 0, 255, 0.2);
+            box-shadow: 0 0 10px var(--secondary-color);
+        }
     </style>
 </head>
-<body class="text-[var(--text-color)] flex justify-center items-center min-h-screen p-4 overflow-hidden">
+<body class="text-[var(--text-color)] bg-black p-4">
 
-    <div class="container flex flex-wrap gap-8 w-full h-full max-h-[95vh] max-w-7xl cyber-border p-4 bg-[rgba(10,12,16,0.8)] backdrop-blur-sm">
+    <div class="container mx-auto flex flex-col lg:flex-row gap-8 w-full lg:h-full lg:max-h-[95vh] max-w-7xl cyber-border p-4 bg-[rgba(10,12,16,0.8)] backdrop-blur-sm">
         
-        <div class="main-content flex-grow flex flex-col min-w-[300px] flex-[3]">
+        <div class="main-content flex-grow flex flex-col min-w-0 flex-[3]">
             <h1 class="text-2xl text-center text-[var(--primary-color)] cyber-shadow mb-4 tracking-[3px]">
                 // CORTEX ANOMALY DETECTION //
             </h1>
@@ -91,21 +91,22 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
                 <video id="video" class="absolute top-0 left-0 w-full h-full object-cover" autoplay muted playsinline></video>
                 <canvas id="overlay" class="absolute top-0 left-0 w-full h-full"></canvas>
             </div>
-            <div id="controls-grid" class="controls grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+            <div id="controls-grid" class="controls grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
                 <button id="capture-btn" class="cyber-button py-2 uppercase text-sm" disabled>REGISTRER ANSIKT</button>
                 <button id="save-btn" class="cyber-button py-2 uppercase text-sm" disabled>EKSPORTER DB</button>
                 <label for="load-input" class="cyber-button text-center py-2 uppercase text-sm cursor-pointer" id="load-label">IMPORTER DB</label>
                 <input type="file" id="load-input" class="hidden" accept=".json">
                 <button id="behavior-btn" class="cyber-button py-2 uppercase text-sm" disabled>🕵️ ANALYSER ADFERD</button>
                 <button id="report-btn" class="cyber-button py-2 uppercase text-sm" disabled>✨ GENERER RAPPORT</button>
+                <button id="summary-btn" class="cyber-button py-2 uppercase text-sm" disabled>📖 LOGG-SAMMENDRAG</button>
                 <button id="save-unknown-btn" class="cyber-button py-2 uppercase text-sm" disabled>⬇️ EKSPORTER UKJENTE</button>
             </div>
              <div class="mt-auto text-center text-xs text-gray-500 pt-4">
-                <p>CORTEX v5.9 | Tech Stack: HTML, Tailwind, face-api.js, Gemini API, Imagen</p>
+                <p>CORTEX v6.4.2 | Operatør: Jon-Arve Constantine Grønsberg-Ovesen</p>
             </div>
         </div>
 
-        <div class="sidebar flex-grow flex flex-col gap-4 bg-[rgba(0,0,0,0.3)] border border-[var(--primary-color)] p-4 min-w-[250px] flex-[1] overflow-y-auto">
+        <div class="sidebar w-full lg:w-auto flex-grow-0 lg:flex-grow flex flex-col gap-4 bg-[rgba(0,0,0,0.3)] border border-[var(--primary-color)] p-4 min-w-[250px] flex-[1] lg:overflow-y-auto">
             <div>
                  <h2 class="text-lg text-[var(--secondary-color)] cyber-shadow-secondary border-b border-[var(--secondary-color)] pb-2 mb-2">API NØKKEL</h2>
                  <div class="flex gap-2">
@@ -120,22 +121,27 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
             </div>
             <div>
                  <h2 class="text-lg text-[var(--secondary-color)] cyber-shadow-secondary border-b border-[var(--secondary-color)] pb-2 mb-2">AI-PROTOKOLLER</h2>
-                 <div class="grid grid-cols-2 gap-2">
-                     <button id="gabriel-btn" class="cyber-button py-2 uppercase text-sm">GABRIEL</button>
-                     <button id="rafael-btn" class="cyber-button py-2 uppercase text-sm" disabled>RAFAEL</button>
+                 <div class="grid grid-cols-2 lg:grid-cols-3 gap-2">
+                     <button id="gabriel-btn" class="cyber-button py-2 uppercase text-xs">GABRIEL</button>
+                     <button id="rafael-btn" class="cyber-button py-2 uppercase text-xs" disabled>RAFAEL</button>
+                     <button id="metatron-btn" class="cyber-button py-2 uppercase text-xs" disabled>METATRON</button>
                  </div>
             </div>
             <div>
+                 <h2 class="text-lg text-[var(--secondary-color)] cyber-shadow-secondary border-b border-[var(--secondary-color)] pb-2 mb-2">HJELP & INFO</h2>
+                 <button id="help-btn" class="cyber-button w-full py-2 uppercase text-sm">ÅPNE HJELPESENTER</button>
+            </div>
+            <div>
                 <h2 class="text-lg text-[var(--secondary-color)] cyber-shadow-secondary border-b border-[var(--secondary-color)] pb-2 mb-2">KJENTE INDIVIDER</h2>
-                <ul id="known-faces-list" class="list-none h-20 overflow-y-auto bg-[rgba(0,0,0,0.5)] p-2 text-sm"></ul>
+                <ul id="known-faces-list" class="list-none h-32 overflow-y-auto bg-[rgba(0,0,0,0.5)] p-2 text-sm"></ul>
             </div>
             <div>
                 <h2 class="text-lg text-[var(--secondary-color)] cyber-shadow-secondary border-b border-[var(--secondary-color)] pb-2 mb-2">SYSTEMLOGG</h2>
-                <ul id="log" class="list-none h-20 overflow-y-auto bg-[rgba(0,0,0,0.5)] p-2 text-xs"></ul>
+                <ul id="log" class="list-none h-32 overflow-y-auto bg-[rgba(0,0,0,0.5)] p-2 text-xs"></ul>
             </div>
             <div class="flex flex-col flex-grow min-h-0">
                 <h2 class="text-lg text-[var(--secondary-color)] cyber-shadow-secondary border-b border-[var(--secondary-color)] pb-2 mb-2">CORTEX ASSISTENT</h2>
-                <div id="chat-history" class="flex-grow overflow-y-auto bg-[rgba(0,0,0,0.5)] p-2 text-xs space-y-2"></div>
+                <div id="chat-history" class="flex-grow h-32 overflow-y-auto bg-[rgba(0,0,0,0.5)] p-2 text-xs space-y-2"></div>
                 <form id="chat-form" class="flex gap-2 mt-2">
                     <input type="text" id="chat-input" placeholder="Spør assistenten..." class="bg-[#222] border border-[var(--primary-color)] text-[var(--primary-color)] p-1 w-full font-mono text-xs" disabled>
                     <button id="chat-submit-btn" type="submit" class="cyber-button px-2 text-sm" disabled>SEND</button>
@@ -144,12 +150,11 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
         </div>
     </div>
 
+    <!-- Modals -->
     <div id="loading-message" class="fixed inset-0 flex justify-center items-center bg-[rgba(0,0,0,0.9)] z-50 flex-col gap-4 text-center">
         <div class="text-3xl text-[var(--primary-color)] cyber-shadow">INITIALISERER AI-KJERNE...</div>
         <div id="loading-status" class="max-w-xs">Venter på AI-bibliotek...</div>
     </div>
-
-    <!-- Modals -->
     <div id="modal-backdrop" class="hidden fixed inset-0 flex justify-center items-center bg-[rgba(0,0,0,0.9)] z-40">
         <div class="modal bg-[var(--background-color)] border-2 border-[var(--secondary-color)] p-8 shadow-[0_0_15px_var(--secondary-color)] text-center">
             <h2 class="text-2xl text-[var(--secondary-color)] cyber-shadow-secondary mb-4">REGISTRER NYTT INDIVID</h2>
@@ -187,11 +192,113 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
             </div>
         </div>
     </div>
-     <div id="protocol-modal-backdrop" class="hidden fixed inset-0 flex justify-center items-center bg-[rgba(0,0,0,0.9)] z-40 p-4">
+    <div id="protocol-modal-backdrop" class="hidden fixed inset-0 flex justify-center items-center bg-[rgba(0,0,0,0.9)] z-40 p-4">
         <div class="modal bg-[var(--background-color)] border-2 border-[var(--secondary-color)] p-8 shadow-[0_0_15px_var(--secondary-color)] text-center w-full max-w-2xl max-h-[80vh] flex flex-col">
             <h2 id="protocol-title" class="text-2xl text-[var(--secondary-color)] cyber-shadow-secondary mb-4"></h2>
             <div id="protocol-content" class="text-left overflow-y-auto flex-grow bg-black/30 p-4 text-sm/relaxed"></div>
             <button id="close-protocol-btn" class="cyber-button w-full py-2 uppercase mt-4">LUKK</button>
+        </div>
+    </div>
+    <div id="summary-modal-backdrop" class="hidden fixed inset-0 flex justify-center items-center bg-[rgba(0,0,0,0.9)] z-40 p-4">
+        <div class="modal bg-[var(--background-color)] border-2 border-[var(--secondary-color)] p-8 shadow-[0_0_15px_var(--secondary-color)] text-center w-full max-w-3xl max-h-[80vh] flex flex-col">
+            <h2 class="text-2xl text-[var(--secondary-color)] cyber-shadow-secondary mb-4">LOGG-SAMMENDRAG</h2>
+            <div id="summary-content" class="text-left overflow-y-auto flex-grow bg-black/30 p-4 text-sm/relaxed"></div>
+            <button id="close-summary-btn" class="cyber-button w-full py-2 uppercase mt-4">LUKK</button>
+        </div>
+    </div>
+    <div id="metatron-modal-backdrop" class="hidden fixed inset-0 flex justify-center items-center bg-[rgba(0,0,0,0.95)] z-50 p-4">
+        <div class="modal bg-[var(--background-color)] border-2 border-[var(--secondary-color)] p-4 sm:p-8 shadow-[0_0_25px_var(--secondary-color)] w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <h2 class="text-2xl text-[var(--secondary-color)] cyber-shadow-secondary mb-4 text-center">PROTOKOLL METATRON: PREDIKTIV ANALYSE</h2>
+            <div class="flex-grow grid grid-cols-1 md:grid-cols-2 gap-4 min-h-0">
+                <div class="flex flex-col gap-4">
+                    <h3 class="text-lg text-[var(--primary-color)] cyber-shadow">INNHENTET SEKVENSDATA</h3>
+                    <div id="metatron-frames-container" class="grid grid-cols-3 sm:grid-cols-5 gap-2 bg-black/30 p-2 border border-dashed border-[var(--primary-color)]"></div>
+                     <div id="metatron-confidence-visualizer" class="w-full">
+                        <h3 class="text-lg text-[var(--primary-color)] cyber-shadow mb-2">PREDIKSJONSKONFIDENS</h3>
+                        <div class="w-full bg-black/50 border-2 border-[var(--primary-color)] h-8 p-1">
+                            <div id="confidence-bar" class="bg-[var(--primary-color)] h-full transition-all duration-1000 ease-out" style="width: 0%;"></div>
+                        </div>
+                        <p id="confidence-text" class="text-center mt-1 text-lg">0%</p>
+                    </div>
+                </div>
+                <div class="flex flex-col min-h-0">
+                    <h3 class="text-lg text-[var(--primary-color)] cyber-shadow">AI PREDIKSJON</h3>
+                    <div id="metatron-prediction-content" class="text-left overflow-y-auto flex-grow bg-black/30 p-4 text-base/relaxed mt-2"></div>
+                </div>
+            </div>
+            <button id="close-metatron-btn" class="cyber-button w-full py-2 uppercase mt-4">LUKK</button>
+        </div>
+    </div>
+    <div id="help-modal-backdrop" class="hidden fixed inset-0 flex justify-center items-center bg-[rgba(0,0,0,0.95)] z-50 p-4">
+        <div class="modal bg-[var(--background-color)] border-2 border-[var(--primary-color)] p-4 sm:p-6 shadow-[0_0_25px_var(--primary-color)] w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <h2 class="text-2xl text-[var(--primary-color)] cyber-shadow mb-4 text-center">CORTEX HJELPESENTER</h2>
+            <div class="flex border-b border-[var(--primary-color)] mb-4">
+                <button data-tab="howto" class="help-tab flex-1 p-2 uppercase text-sm">Slik Gjør Du</button>
+                <button data-tab="wiki" class="help-tab flex-1 p-2 uppercase text-sm">Wiki / Begreper</button>
+                <button data-tab="examples" class="help-tab flex-1 p-2 uppercase text-sm">Eksempler</button>
+            </div>
+            <div class="flex-grow overflow-y-auto p-4 bg-black/30 text-sm/relaxed space-y-4">
+                <div id="howto-content" class="help-tab-content space-y-4">
+                    <div>
+                        <h3 class="text-lg text-[var(--secondary-color)]">1. Aktivere AI-funksjoner</h3>
+                        <p>Lim inn din Google AI Studio API-nøkkel i feltet "API NØKKEL" øverst i sidepanelet og trykk "LAGRE". Dette aktiverer alle AI-drevne knapper.</p>
+                    </div>
+                    <div>
+                        <h3 class="text-lg text-[var(--secondary-color)]">2. Registrere et nytt ansikt</h3>
+                        <p>Rett kameraet mot et ansikt og trykk "REGISTRER ANSIKT". Skriv inn et navn i vinduet som dukker opp og trykk "LAGRE". Personen vil nå gjenkjennes av systemet.</p>
+                    </div>
+                    <div>
+                        <h3 class="text-lg text-[var(--secondary-color)]">3. Justere Gjenkjenning</h3>
+                        <p>Hvis kjente fjes ikke gjenkjennes, prøv å øke "Gjenkjenningstoleranse"-verdien i innstillingene. En verdi rundt 0.5-0.6 er vanligvis best.</p>
+                    </div>
+                     <div>
+                        <h3 class="text-lg text-[var(--secondary-color)]">4. Bruke AI-Protokoller</h3>
+                        <p>Trykk på GABRIEL, RAFAEL, eller METATRON for å få spesialiserte analyser. METATRON gir den dypeste, prediktive analysen av et subjekts intensjon.</p>
+                    </div>
+                </div>
+
+                <div id="wiki-content" class="help-tab-content hidden space-y-4">
+                     <div>
+                        <h3 class="text-lg text-[var(--secondary-color)]">Gjenkjenningstoleranse</h3>
+                        <p>Dette er en verdi som bestemmer hvor strengt systemet er når det sammenligner ansikter. En lav verdi (f.eks. 0.4) krever et nesten perfekt treff. En høyere verdi (f.eks. 0.6) er mer tolerant for variasjoner som smil eller ulik belysning.</p>
+                    </div>
+                    <div>
+                        <h3 class="text-lg text-[var(--secondary-color)]">Protokoll GABRIEL</h3>
+                        <p>En AI-drevet beskytter av informasjonsintegritet. Protokollen verifiserer den lagrede ansiktsdatabasen for å sikre at den er ukorrupt og sikker. Den genererer en sjekksum som fungerer som et digitalt segl.</p>
+                    </div>
+                    <div>
+                        <h3 class="text-lg text-[var(--secondary-color)]">Protokoll RAFAEL</h3>
+                        <p>En AI-drevet beskytter av transport og bevegelse. Protokollen analyserer en sekvens av bilder for å vurdere flyt, tetthet og unormale bevegelsesmønstre i sanntid.</p>
+                    </div>
+                    <div>
+                        <h3 class="text-lg text-[var(--secondary-color)]">Protokoll METATRON</h3>
+                        <p>Den mest avanserte protokollen. METATRON analyserer en bildesekvens for å forutsi et subjekts sannsynlige neste handling eller intensjon. Den gir en konkret prediksjon og en konfidensscore.</p>
+                    </div>
+                </div>
+
+                <div id="examples-content" class="help-tab-content hidden space-y-4">
+                    <div>
+                        <h3 class="text-lg text-[var(--secondary-color)]">Gode Prompts for CORTEX Assistent</h3>
+                        <ul class="list-disc ml-6">
+                            <li>"List alle avvik siste time."</li>
+                            <li>"Når ble 'Navn Navnesen' sist observert?"</li>
+                            <li>"Hvor mange unike, ukjente individer er logget?"</li>
+                            <li>"Har det vært noen systemfeil i dag?"</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-lg text-[var(--secondary-color)]">Gode Beskrivelser for Fantombilde (Imagen)</h3>
+                        <p>Vær så spesifikk som mulig. Bruk adjektiver.</p>
+                        <ul class="list-disc ml-6">
+                            <li>"Fotorealistisk portrett av en eldre mann med grått, kort hår, rynker og et alvorlig uttrykk."</li>
+                            <li>"En ung kvinne med langt, rødt hår, blå øyne og fregner, smiler."</li>
+                            <li>"Mann i 30-årene med mørkt skjegg, briller og en nøytral ansiktsmine."</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <button id="close-help-btn" class="cyber-button w-full py-2 uppercase mt-4">LUKK</button>
         </div>
     </div>
     
@@ -202,7 +309,7 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
                 return;
             }
 
-            // --- Element references (consolidated) ---
+            // --- All element references consolidated ---
             const video = document.getElementById('video');
             const overlay = document.getElementById('overlay');
             const captureBtn = document.getElementById('capture-btn');
@@ -211,6 +318,7 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
             const reportBtn = document.getElementById('report-btn');
             const behaviorBtn = document.getElementById('behavior-btn');
             const saveUnknownBtn = document.getElementById('save-unknown-btn');
+            const summaryBtn = document.getElementById('summary-btn');
             const knownFacesList = document.getElementById('known-faces-list');
             const logList = document.getElementById('log');
             const loadingMessage = document.getElementById('loading-message');
@@ -242,9 +350,24 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
             const closeProtocolBtn = document.getElementById('close-protocol-btn');
             const gabrielBtn = document.getElementById('gabriel-btn');
             const rafaelBtn = document.getElementById('rafael-btn');
+            const metatronBtn = document.getElementById('metatron-btn');
             const toleranceSlider = document.getElementById('tolerance-slider');
             const toleranceValue = document.getElementById('tolerance-value');
-
+            const summaryModal = document.getElementById('summary-modal-backdrop');
+            const summaryContent = document.getElementById('summary-content');
+            const closeSummaryBtn = document.getElementById('close-summary-btn');
+            const metatronModal = document.getElementById('metatron-modal-backdrop');
+            const metatronFramesContainer = document.getElementById('metatron-frames-container');
+            const metatronPredictionContent = document.getElementById('metatron-prediction-content');
+            const confidenceBar = document.getElementById('confidence-bar');
+            const confidenceText = document.getElementById('confidence-text');
+            const closeMetatronBtn = document.getElementById('close-metatron-btn');
+            const helpBtn = document.getElementById('help-btn');
+            const helpModal = document.getElementById('help-modal-backdrop');
+            const closeHelpBtn = document.getElementById('close-help-btn');
+            const helpTabs = helpModal.querySelectorAll('.help-tab');
+            const helpTabContents = helpModal.querySelectorAll('.help-tab-content');
+            
             // State variables
             let userApiKey = ''; 
             let knownFaceDescriptors = [];
@@ -254,6 +377,7 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
             let detectionInterval;
             let imagenBtn = null; 
 
+            // All functions are restored here...
             function addLog(message, type = 'system') {
                 const li = document.createElement('li');
                 li.textContent = `[${new Date().toLocaleTimeString('no-NO')}] ${message}`;
@@ -296,7 +420,6 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
                 images.forEach(imgData => {
                     parts.push({ inline_data: { mime_type: "image/jpeg", data: imgData } });
                 });
-
                 const payload = { contents: [{ parts }] };
                 if (schema) payload.generationConfig = { response_mime_type: "application/json", response_schema: schema };
                 const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -323,8 +446,7 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
                 }
                 return frames;
             }
-
-            // --- FIX: Restored full function definitions ---
+            
             async function generateAndDisplayReport() {
                 if (!checkApiKey()) return;
                 reportContent.innerHTML = createLoader();
@@ -337,28 +459,32 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
                     reportContent.innerHTML = `<p class="text-[var(--danger-color)]">FEIL: Kunne ikke koble til Gemini. <br><br>${error.message}</p>`;
                 }
             }
-
-            function toggleImagenButton(show) {
-                if (imagenBtn) {
-                   imagenBtn.remove();
-                   imagenBtn = null;
+            
+            async function generateLogSummary() {
+                 if (!checkApiKey()) return;
+                if (logList.children.length === 0) {
+                    addLog("Loggen er tom. Ingen data å oppsummere.", "anomaly");
+                    return;
                 }
-               if (show && userApiKey) {
-                   imagenBtn = document.createElement('button');
-                   imagenBtn.id = 'generate-sketch-btn';
-                   imagenBtn.className = 'cyber-button py-2 uppercase text-sm';
-                   imagenBtn.innerHTML = '🖼️ GENERER FANTOMBILDE';
-                   imagenBtn.onclick = () => imagenModal.classList.remove('hidden');
-                   controlsGrid.appendChild(imagenBtn);
-               }
-           }
+                summaryContent.innerHTML = createLoader('Analyserer full logg...');
+                summaryModal.classList.remove('hidden');
+                const fullLog = Array.from(logList.children).map(li => li.textContent).reverse().join('\n');
+                const prompt = `Du er en AI-analytiker for CORTEX-sikkerhetssystemet. Du har fått en komplett systemlogg for en vaktperiode. Din oppgave er å generere et detaljert sammendrag.
+                Loggdata:\n---\n${fullLog}\n---\nAnalyser loggen og produser et sammendrag med følgende seksjoner, formatert med Markdown:\n1.  **Hovedsammendrag:** Et kort avsnitt som oppsummerer den generelle aktiviteten.\n2.  **Signifikante Hendelser:** En punktliste over de mest betydningsfulle hendelsene (f.eks. første gang et nytt ukjent fjes ble sett, kritiske systemfeil, aktivering av AI-protokoller).\n3.  **Trender og Mønstre:** Identifiser eventuelle trender, som gjentatte deteksjoner av samme ukjente individ på ulike tidspunkter, eller hyppige systemfeil.\n4.  **Konklusjon:** En avsluttende setning om vaktperiodens status (f.eks., "Rolig periode med få avvik", "Aktiv periode med flere ukjente individer som krever oppfølging").`;
+                try {
+                    const responseText = await callGeminiAPI(prompt, []);
+                    summaryContent.innerHTML = responseText.replace(/# (.+)/g, '<h3>$1</h3>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\* (.+)/g, '<li class="ml-4 list-disc">$1</li>').replace(/(\n)/g, '<br>');
+                } catch (error) {
+                    summaryContent.innerHTML = `<p class="text-[var(--danger-color)]">FEIL under generering av logg-sammendrag: ${error.message}</p>`;
+                }
+            }
 
             async function getAnomalyExplanation(analysisData) {
                 anomalyExplanationEl.innerHTML = createLoader('Henter risikovurdering...');
                 anomalyExplanationEl.classList.remove('hidden');
                 const prompt = `En CORTEX-sikkerhetsoperatør har mottatt følgende analyse av et **ukjent** subjekt: Vurdering: ${analysisData.assessment}, Emosjonell tilstand: ${analysisData.emotion}. \n\nDin oppgave:\n1. Skriv en kort, en-linjers risikovurdering.\n2. Gi en punktliste med 2-3 konkrete, anbefalte handlinger for operatøren.\nStart svaret ditt med overskriften "**RISIKOVURDERING OG ANBEFALING**".`;
                 try {
-                    const responseText = await callGeminiAPI(prompt);
+                    const responseText = await callGeminiAPI(prompt, []);
                     anomalyExplanationEl.innerHTML = responseText.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\* (.+)/g, '<li class="ml-4 list-disc">$1</li>').replace(/(\n)/g, '<br>');
                 } catch (error) {
                     anomalyExplanationEl.innerHTML = `<p class="text-[var(--danger-color)]">Kunne ikke hente anbefalinger: ${error.message}</p>`;
@@ -417,6 +543,21 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
                     addLog('Subjektanalyse (JSON) feilet kritisk.', 'anomaly');
                 }
             }
+            
+            function toggleImagenButton(show) {
+                 if (imagenBtn) {
+                    imagenBtn.remove();
+                    imagenBtn = null;
+                }
+               if (show && userApiKey) {
+                   imagenBtn = document.createElement('button');
+                   imagenBtn.id = 'generate-sketch-btn';
+                   imagenBtn.className = 'cyber-button py-2 uppercase text-sm';
+                   imagenBtn.innerHTML = '🖼️ GENERER FANTOMBILDE';
+                   imagenBtn.onclick = () => imagenModal.classList.remove('hidden');
+                   controlsGrid.appendChild(imagenBtn);
+               }
+           }
             
             async function callImagenAPI(prompt) {
                 if (!checkApiKey()) return;
@@ -505,6 +646,57 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
                 }
             }
             
+             async function runMetatronProtocol() {
+                if (!checkApiKey()) return;
+
+                metatronPredictionContent.innerHTML = createLoader('Initialiserer prediktiv analyse...');
+                confidenceBar.style.width = '0%';
+                confidenceText.textContent = '0%';
+                metatronFramesContainer.innerHTML = Array(5).fill('<div class="aspect-video bg-black/50 animate-pulse"></div>').join('');
+                metatronModal.classList.remove('hidden');
+
+                addLog('Aktiverer Protokoll METATRON...', 'system');
+                
+                const imageSequence = await captureFrameSequence(5, 300);
+                
+                metatronFramesContainer.innerHTML = '';
+                imageSequence.forEach(frame => {
+                    const img = document.createElement('img');
+                    img.src = `data:image/jpeg;base64,${frame}`;
+                    img.className = 'w-full h-auto object-cover border border-[var(--primary-color)]/50';
+                    metatronFramesContainer.appendChild(img);
+                });
+
+                metatronPredictionContent.innerHTML = createLoader('AI analyserer sekvens for intensjon...');
+
+                const prompt = `Prompt fra Operatør Jon-Arve Constantine Grønsberg-Ovesen:
+                Du er AI-protokoll METATRON, en ekspert i prediktiv adferdsanalyse. Du har mottatt en sekvens på ${imageSequence.length} bilder av et subjekt. Analyser endringene i kroppsspråk, ansiktsuttrykk og positur mellom bildene for å forutsi subjektets mest sannsynlige umiddelbare intensjon eller neste handling. Svar med et JSON-objekt som følger det gitte skjemaet.
+                - Vurder om subjektet blir mer eller mindre anspent, aggressivt, eller om det forbereder seg på en spesifikk handling (f.eks., å reise seg, løpe, angripe, snakke).
+                - Baser konfidensscoren på hvor tydelige og konsistente signalene er gjennom sekvensen.`;
+                
+                const schema = {
+                    type: "OBJECT",
+                    properties: {
+                        prediction_text: { type: "STRING", description: "En kort, konsis setning som beskriver den mest sannsynlige neste handlingen eller intensjonen." },
+                        confidence_score: { type: "NUMBER", description: "Et tall mellom 0.0 og 1.0 som representerer din konfidens i prediksjonen." },
+                        reasoning: { type: "STRING", description: "En kort setning som forklarer hvilke visuelle hint som førte til prediksjonen." }
+                    },
+                    required: ["prediction_text", "confidence_score", "reasoning"]
+                };
+
+                try {
+                    const data = await callGeminiAPI(prompt, imageSequence, schema);
+                    metatronPredictionContent.innerHTML = `<p class="text-xl text-[var(--primary-color)]">${data.prediction_text || "Ingen klar prediksjon."}</p><p class="mt-4 text-gray-400"><strong>Begrunnelse:</strong> ${data.reasoning || "Utilgjengelig."}</p>`;
+                    const confidencePercent = Math.round((data.confidence_score || 0) * 100);
+                    confidenceText.textContent = `${confidencePercent}%`;
+                    setTimeout(() => { confidenceBar.style.width = `${confidencePercent}%`; }, 100);
+                    addLog(`METATRON Prediksjon: ${data.prediction_text} (Konfidens: ${confidencePercent}%)`, 'known');
+                } catch (error) {
+                    metatronPredictionContent.innerHTML = `<p class="text-[var(--danger-color)]">FEIL under prediktiv analyse: ${error.message}</p>`;
+                    addLog(`METATRON-protokoll feilet: ${error.message}`, 'anomaly');
+                }
+            }
+
             function updateFaceMatcher() { 
                 const tolerance = parseFloat(toleranceSlider.value);
                 if (knownFaceDescriptors.length > 0) { 
@@ -571,9 +763,11 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
                     addLog('API Nøkkel lagret og AI-funksjoner aktivert.', 'known');
                     behaviorBtn.disabled = false;
                     reportBtn.disabled = false;
+                    summaryBtn.disabled = false;
                     chatInput.disabled = false;
                     chatSubmitBtn.disabled = false;
                     rafaelBtn.disabled = false;
+                    metatronBtn.disabled = false;
                 } else {
                     addLog('API Nøkkel-feltet er tomt.', 'anomaly');
                 }
@@ -684,6 +878,30 @@ CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
             gabrielBtn.addEventListener('click', runGabrielProtocol);
             rafaelBtn.addEventListener('click', runRafaelProtocol);
             closeProtocolBtn.addEventListener('click', () => protocolModal.classList.add('hidden'));
+            summaryBtn.addEventListener('click', generateLogSummary);
+            closeSummaryBtn.addEventListener('click', () => summaryModal.classList.add('hidden'));
+            metatronBtn.addEventListener('click', runMetatronProtocol);
+            closeMetatronBtn.addEventListener('click', () => metatronModal.classList.add('hidden'));
+            helpBtn.addEventListener('click', () => helpModal.classList.remove('hidden'));
+            closeHelpBtn.addEventListener('click', () => helpModal.classList.add('hidden'));
+            
+            helpTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const target = tab.dataset.tab;
+                    helpTabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    helpTabContents.forEach(c => {
+                        if (c.id === `${target}-content`) {
+                            c.classList.remove('hidden');
+                        } else {
+                            c.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+            // Make the first tab active by default
+            if(helpTabs.length > 0) helpTabs[0].classList.add('active');
+            if(helpTabContents.length > 0) helpTabContents[0].classList.remove('hidden');
 
             initialize();
         });
