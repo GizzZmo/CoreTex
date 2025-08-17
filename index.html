@@ -78,6 +78,11 @@ Visualization & Content Choices:
             background-color: rgba(255, 0, 255, 0.2);
             box-shadow: 0 0 10px var(--secondary-color);
         }
+        #night-vision-toggle[data-active="true"] {
+            background-color: rgba(0, 255, 204, 0.2);
+            box-shadow: 0 0 10px var(--primary-color);
+            color: var(--primary-color);
+        }
     </style>
 </head>
 <body class="text-[var(--text-color)] bg-black p-4">
@@ -93,7 +98,8 @@ Visualization & Content Choices:
             </div>
             <div class="video-container relative w-full bg-black cyber-border-secondary aspect-video">
                 <video id="video" class="absolute top-0 left-0 w-full h-full object-cover" autoplay muted playsinline></video>
-                <canvas id="overlay" class="absolute top-0 left-0 w-full h-full"></canvas>
+                <canvas id="night-vision-canvas" class="absolute top-0 left-0 w-full h-full hidden" style="z-index: 1;"></canvas>
+                <canvas id="overlay" class="absolute top-0 left-0 w-full h-full" style="z-index: 2;"></canvas>
             </div>
             <div id="controls-grid" class="controls grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
                 <button id="capture-btn" class="cyber-button py-2 uppercase text-sm" disabled>REGISTRER ANSIKT</button>
@@ -127,6 +133,10 @@ Visualization & Content Choices:
                  <div id="camera-selector-container" class="hidden mt-2">
                      <label for="camera-select" class="text-sm block">KAMERAVALGSYSTEM:</label>
                      <select id="camera-select" class="bg-[#222] border border-[var(--primary-color)] text-[var(--primary-color)] p-1 w-full font-mono text-xs mt-1"></select>
+                 </div>
+                 <div class="mt-2 flex items-center justify-between">
+                     <label for="night-vision-toggle" class="text-sm">MØRKESYN:</label>
+                     <button id="night-vision-toggle" class="cyber-button px-3 py-1 text-xs" data-active="false">AV</button>
                  </div>
             </div>
             <div>
@@ -431,6 +441,8 @@ Visualization & Content Choices:
             const helpTabContents = helpModal.querySelectorAll('.help-tab-content');
             const cameraSelect = document.getElementById('camera-select');
             const cameraSelectorContainer = document.getElementById('camera-selector-container');
+            const nightVisionToggle = document.getElementById('night-vision-toggle');
+            const nightVisionCanvas = document.getElementById('night-vision-canvas');
             const mainContainer = document.getElementById('main-container');
             const welcomeModal = document.getElementById('welcome-modal');
             const enterAppBtn = document.getElementById('enter-app-btn');
@@ -448,6 +460,8 @@ Visualization & Content Choices:
             let detectionInterval;
             let imagenBtn = null; 
             let currentStream;
+            let nightVisionActive = false;
+            let nightVisionInterval;
 
             // --- All functions are restored here... ---
             
@@ -509,6 +523,70 @@ Visualization & Content Choices:
                     }
                 } catch(e) {
                     addLog("Kunne ikke hente kameraliste. Mangler tillatelse?", "anomaly");
+                }
+            }
+
+            function toggleNightVision() {
+                nightVisionActive = !nightVisionActive;
+                
+                if (nightVisionActive) {
+                    nightVisionToggle.textContent = 'PÅ';
+                    nightVisionToggle.dataset.active = 'true';
+                    nightVisionCanvas.classList.remove('hidden');
+                    video.style.display = 'none';
+                    startNightVisionRendering();
+                    addLog('Mørkesyn aktivert', 'system');
+                } else {
+                    nightVisionToggle.textContent = 'AV';
+                    nightVisionToggle.dataset.active = 'false';
+                    nightVisionCanvas.classList.add('hidden');
+                    video.style.display = 'block';
+                    stopNightVisionRendering();
+                    addLog('Mørkesyn deaktivert', 'system');
+                }
+            }
+
+            function startNightVisionRendering() {
+                const ctx = nightVisionCanvas.getContext('2d');
+                
+                function renderNightVision() {
+                    if (!nightVisionActive || video.paused || video.ended || video.videoWidth === 0) return;
+                    
+                    // Set canvas size to match video
+                    nightVisionCanvas.width = video.videoWidth;
+                    nightVisionCanvas.height = video.videoHeight;
+                    
+                    // Draw video frame to canvas
+                    ctx.drawImage(video, 0, 0, nightVisionCanvas.width, nightVisionCanvas.height);
+                    
+                    // Apply night vision filter (green tint)
+                    const imageData = ctx.getImageData(0, 0, nightVisionCanvas.width, nightVisionCanvas.height);
+                    const data = imageData.data;
+                    
+                    for (let i = 0; i < data.length; i += 4) {
+                        const r = data[i];
+                        const g = data[i + 1];
+                        const b = data[i + 2];
+                        
+                        // Convert to grayscale
+                        const gray = r * 0.299 + g * 0.587 + b * 0.114;
+                        
+                        // Apply green night vision effect
+                        data[i] = Math.min(255, gray * 0.2);     // Red - reduced
+                        data[i + 1] = Math.min(255, gray * 1.5); // Green - enhanced
+                        data[i + 2] = Math.min(255, gray * 0.2); // Blue - reduced
+                    }
+                    
+                    ctx.putImageData(imageData, 0, 0);
+                }
+                
+                nightVisionInterval = setInterval(renderNightVision, 33); // ~30 FPS
+            }
+
+            function stopNightVisionRendering() {
+                if (nightVisionInterval) {
+                    clearInterval(nightVisionInterval);
+                    nightVisionInterval = null;
                 }
             }
 
@@ -1043,6 +1121,10 @@ Visualization & Content Choices:
                 loadingMessage.style.display = 'none';
                 addLog('System klart. Overvåking aktiv.', 'known');
                 detectionInterval = setInterval(detectFacesLoop, 350);
+                
+                // Initialize night vision canvas size
+                nightVisionCanvas.width = video.videoWidth;
+                nightVisionCanvas.height = video.videoHeight;
             });
             
             chatForm.addEventListener('submit', (e) => {
@@ -1081,6 +1163,7 @@ Visualization & Content Choices:
             urielBtn.addEventListener('click', runUrielProtocol);
             sandalphonBtn.addEventListener('click', runSandalphonProtocol);
             cameraSelect.addEventListener('change', (e) => startStream(e.target.value));
+            nightVisionToggle.addEventListener('click', toggleNightVision);
             
             helpTabs.forEach(tab => {
                 tab.addEventListener('click', () => {
