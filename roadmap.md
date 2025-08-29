@@ -2,20 +2,20 @@
 Introduksjon
 Målet med CORTEX versjon 6.0 er å integrere systemet med GitHub for å muliggjøre persistent datalagring, versjonskontroll av databaser og logger, og fremtidig samarbeid. Dette flytter datahåndteringen fra midlertidige, lokale filer til en robust, skybasert løsning.
 
-Fase 1: Autentisering og autorisering (Uke 27: 30. juni - 6. juli 2025)
+Fase 1: Autentisering og autorisering (Uke 27: 30. juni - 6. juli 2025) ✅ FULLFØRT
 Mål: Etablere en sikker tilkobling mellom CORTEX-applikasjonen og en brukers GitHub-konto.
 
 Oppgaver:
 
-Implementere OAuth 2.0: Sette opp en OAuth 2.0-flyt for å la brukere logge inn med sin GitHub-konto.
+✅ Implementere OAuth 2.0: Sette opp en OAuth 2.0-flyt for å la brukere logge inn med sin GitHub-konto.
 
-Lage UI for innlogging: Utvikle et nytt UI-element, sannsynligvis en modal eller en egen side, der brukeren kan initiere GitHub-innloggingen.
+✅ Lage UI for innlogging: Utvikle et nytt UI-element, sannsynligvis en modal eller en egen side, der brukeren kan initiere GitHub-innloggingen.
 
-Sikker Token-håndtering: Lagre det mottatte OAuth-tokenet på en sikker måte i klientsesjonen. Unngå usikre metoder som localStorage.
+✅ Sikker Token-håndtering: Lagre det mottatte OAuth-tokenet på en sikker måte i klientsesjonen. Unngå usikre metoder som localStorage.
 
-Håndtere utløpte tokens: Implementere logikk for å håndtere utløpte tokens, enten ved å be brukeren logge inn på nytt eller ved å bruke et refresh-token hvis GitHub API-et støtter det.
+✅ Håndtere utløpte tokens: Implementere logikk for å håndtere utløpte tokens, enten ved å be brukeren logge inn på nytt eller ved å bruke et refresh-token hvis GitHub API-et støtter det.
 
-Milepæl: En bruker kan logge inn med GitHub, og applikasjonen har et gyldig token for å gjøre autentiserte API-kall.
+✅ Milepæl: En bruker kan logge inn med GitHub, og applikasjonen har et gyldig token for å gjøre autentiserte API-kall.
 
 Fase 2: Repository og datastruktur (Uke 28: 7. juli - 13. juli 2025)
 Mål: Definere og håndtere datastrukturen i et dedikert GitHub-repository.
