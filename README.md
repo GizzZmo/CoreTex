@@ -1,11 +1,51 @@
 The `index.html` file is a comprehensive HTML document for the "CORTEX Anomaly Detection" application. Here's an explanation of its structure and functionality:
 
-### General Overview:
-- **Purpose**: This file is the main interface for a cyberpunk-inspired anomaly detection application. It utilizes AI and facial recognition technologies.
-- **Key Features**:
-  - Real-time video feed with face and anomaly detection.
-  - User interaction through buttons and settings.
-  - Integration with AI models and Google API for advanced functionality.
+# CORTEX Anomaly Detector
+
+[![CI/CD Pipeline](https://github.com/GizzZmo/CoreTex/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/GizzZmo/CoreTex/actions)
+
+Cyberpunk-inspired facial recognition and anomaly detection system built with React.
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 18.x or 20.x
+- npm
+
+### Development
+```bash
+git clone https://github.com/GizzZmo/CoreTex.git
+cd CoreTex
+npm install
+npm run dev
+```
+
+### Building
+```bash
+npm run build
+```
+
+### Testing
+```bash
+npm run test
+npm run test:coverage
+```
+
+### Linting
+```bash
+npm run lint
+npm run lint:fix
+```
+
+## 📦 Build Artifacts
+
+The CI/CD pipeline automatically builds the following artifacts:
+- Optimized React application bundle
+- Static assets for deployment
+- Test coverage reports
+- Linting reports
+
+Artifacts are available for download from GitHub Actions runs and can be deployed to any static hosting service.
 
 ---
 
