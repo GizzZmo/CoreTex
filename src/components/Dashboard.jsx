@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 
 // Dashboard viser sanntidsstatistikk og nøkkeltall for ledelse/bruker
 export default function Dashboard({ anomalies, uptime, users, lastReport }) {
@@ -22,3 +23,10 @@ export default function Dashboard({ anomalies, uptime, users, lastReport }) {
     </section>
   );
 }
+
+Dashboard.propTypes = {
+  anomalies: PropTypes.number.isRequired,
+  uptime: PropTypes.number.isRequired,
+  users: PropTypes.number.isRequired,
+  lastReport: PropTypes.string,
+};

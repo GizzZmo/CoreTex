@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
+import PropTypes from "prop-types";
 
 // FaceRecognition-komponenten håndterer webcam-feed og viser ansiktsgjenkjenning/anomalideteksjon
+// eslint-disable-next-line no-unused-vars
 export default function FaceRecognition({ onDetect, tolerance, knownFaces }) {
   const videoRef = useRef(null);
   const [status, setStatus] = useState("Starter kamera …");
@@ -22,6 +24,7 @@ export default function FaceRecognition({ onDetect, tolerance, knownFaces }) {
 
   // Her bør du legge til integrasjon med face-api.js eller annen logikk for ansiktsgjenkjenning
   // og kalle `onDetect(data)` med resultater når ansikt(er) gjenkjennes.
+  // onDetect er klargjort for fremtidig bruk
 
   return (
     <section className="face-recognition bg-gray-800 p-4 mb-4 rounded-lg">
@@ -35,3 +38,9 @@ export default function FaceRecognition({ onDetect, tolerance, knownFaces }) {
     </section>
   );
 }
+
+FaceRecognition.propTypes = {
+  onDetect: PropTypes.func.isRequired,
+  tolerance: PropTypes.number.isRequired,
+  knownFaces: PropTypes.arrayOf(PropTypes.string).isRequired,
+};

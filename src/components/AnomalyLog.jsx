@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 
 // Viser en logg over registrerte avvik (anomalier) i systemet
 export default function AnomalyLog({ anomalies }) {
@@ -27,3 +28,13 @@ export default function AnomalyLog({ anomalies }) {
     </section>
   );
 }
+
+AnomalyLog.propTypes = {
+  anomalies: PropTypes.arrayOf(
+    PropTypes.shape({
+      time: PropTypes.string.isRequired,
+      description: PropTypes.string.isRequired,
+      type: PropTypes.string.isRequired,
+    })
+  ).isRequired,
+};

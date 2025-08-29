@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 
 // Språkvelger for å bytte mellom norsk og engelsk
 export default function LanguageSwitcher({ currentLanguage, onChange }) {
@@ -19,3 +20,8 @@ export default function LanguageSwitcher({ currentLanguage, onChange }) {
     </div>
   );
 }
+
+LanguageSwitcher.propTypes = {
+  currentLanguage: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+};
