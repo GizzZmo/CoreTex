@@ -6,7 +6,7 @@ import FaceRecognition from "../src/components/FaceRecognition";
 
 test("FaceRecognition renders and contains video element", () => {
   const { container } = render(
-    <FaceRecognition onDetect={() => {}} tolerance={0.7} knownFaces={["Ola", "Kari"]} />
+    <FaceRecognition tolerance={0.7} knownFaces={["Ola", "Kari"]} />
   );
   const video = container.querySelector("video");
   expect(video).toBeInTheDocument();

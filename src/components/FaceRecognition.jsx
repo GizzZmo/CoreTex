@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 
 // FaceRecognition-komponenten håndterer webcam-feed og viser ansiktsgjenkjenning/anomalideteksjon
-export default function FaceRecognition({ onDetect, tolerance, knownFaces }) {
+export default function FaceRecognition({ tolerance, knownFaces }) {
   const videoRef = useRef(null);
   const [status, setStatus] = useState("Starter kamera …");
 
