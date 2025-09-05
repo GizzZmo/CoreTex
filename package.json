@@ -33,16 +33,24 @@
   },
   "jest": {
     "testEnvironment": "jsdom",
-    "setupFilesAfterEnv": ["<rootDir>/jest.setup.js"],
+    "setupFilesAfterEnv": [
+      "<rootDir>/jest.setup.js"
+    ],
     "moduleNameMapper": {
       "\\.(css|less|scss|sass)$": "identity-obj-proxy"
     },
     "transform": {
       "^.+\\.(js|jsx)$": "babel-jest"
     },
-    "moduleFileExtensions": ["js", "jsx"],
+    "moduleFileExtensions": [
+      "js",
+      "jsx"
+    ],
     "testMatch": [
       "<rootDir>/tests/**/*.test.js"
     ]
+  },
+  "dependencies": {
+    "prop-types": "^15.8.1"
   }
 }
