@@ -1,0 +1,38 @@
+# Docker deployment configuration
+# Environment: Docker container
+
+app:
+  name: "CoreTex"
+  version: "1.0.0"
+  environment: "production"
+  port: 3000
+
+container:
+  name: "cortex-app"
+  image: "cortex:latest"
+  restart: "always"
+  
+volumes:
+  logs: "/app/logs"
+  config: "/app/config"
+  
+healthcheck:
+  interval: "30s"
+  timeout: "10s"
+  retries: 3
+  command: "curl -f http://localhost:3000/health || exit 1"
+
+security:
+  runAsUser: 1000
+  runAsGroup: 1000
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+    add: ["NET_BIND_SERVICE"]
+
+resources:
+  memory: "512Mi"
+  cpu: "500m"
+  limits:
+    memory: "1Gi"
+    cpu: "1000m"

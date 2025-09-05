@@ -1,13 +1,21 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import App from "../src/App";
 
-test("App bytter språk og viser oppdatert tekst", () => {
+test("App bytter språk og viser oppdatert tekst", async () => {
   render(<App />);
-  // Sjekk at norsk tekst vises først
-  expect(screen.getByText(/Sanntids avviksdeteksjon/i)).toBeInTheDocument();
-  // Bytt til engelsk
-  fireEvent.change(screen.getByLabelText(/Språk/i), { target: { value: "en" } });
-  // Sjekk at engelsk tekst vises
-  expect(screen.getByText(/Real-time Anomaly Detection/i)).toBeInTheDocument();
+  
+  // Wait for initial load and check Norwegian text
+  await waitFor(() => {
+    expect(screen.getByText(/Sanntids avviksdeteksjon/i)).toBeInTheDocument();
+  }, { timeout: 3000 });
+  
+  // Switch to English
+  const languageSelector = await screen.findByLabelText(/Språk/i);
+  fireEvent.change(languageSelector, { target: { value: "en" } });
+  
+  // Wait for English text to appear
+  await waitFor(() => {
+    expect(screen.getByText(/Real-time Anomaly Detection/i)).toBeInTheDocument();
+  }, { timeout: 3000 });
 });

@@ -4,7 +4,7 @@ import FaceRecognition from "./components/FaceRecognition";
 import AnomalyLog from "./components/AnomalyLog";
 import LanguageSwitcher from "./components/LanguageSwitcher";
 import "./styles/main.css";
-import { translations } from "./i18n";
+import { i18n, initializeI18n } from "./utils/i18n";
 import { generateAnomalyId } from "./utils";
 
 export default function App() {
@@ -13,6 +13,29 @@ export default function App() {
   const [uptime, setUptime] = useState(0);
   const [users] = useState(42);
   const [lastReport] = useState("2025-06-28 20:15");
+  const [i18nInitialized, setI18nInitialized] = useState(false);
+
+  // Initialize i18n system
+  useEffect(() => {
+    const initializeApp = async () => {
+      try {
+        // Try to load saved language preference first
+        const savedLanguage = localStorage.getItem('cortex-language');
+        const preferredLanguage = (savedLanguage && (savedLanguage === 'no' || savedLanguage === 'en')) 
+          ? savedLanguage 
+          : 'no';
+        
+        await initializeI18n(preferredLanguage);
+        setLanguage(preferredLanguage);
+        setI18nInitialized(true);
+      } catch (error) {
+        console.warn('Failed to initialize i18n, using fallback:', error);
+        setI18nInitialized(true); // Continue with fallback translations
+      }
+    };
+
+    initializeApp();
+  }, []);
 
   // Update uptime every minute
   useEffect(() => {
@@ -30,33 +53,22 @@ export default function App() {
     const newAnomaly = {
       id: generateAnomalyId(),
       time: new Date().toISOString(),
-      description: anomaly.description || "Ukjent avvik",
-      type: anomaly.type || "Annet",
+      description: anomaly.description || i18n.t('anomalyLog.unknownAnomaly', 'Ukjent avvik'),
+      type: anomaly.type || i18n.t('anomalyLog.other', 'Annet'),
     };
 
     setAnomalies((prev) => [newAnomaly, ...prev].slice(0, 100)); // Keep only last 100 anomalies
   }, []);
 
   // Optimized language change handler
-  const handleLanguageChange = useCallback((newLanguage) => {
-    setLanguage(newLanguage);
-    // Store preference in localStorage for persistence
+  const handleLanguageChange = useCallback(async (newLanguage) => {
     try {
+      await i18n.setLanguage(newLanguage);
+      setLanguage(newLanguage);
+      // Store preference in localStorage for persistence
       localStorage.setItem('cortex-language', newLanguage);
     } catch (error) {
-      console.warn('Could not save language preference:', error);
-    }
-  }, []);
-
-  // Load saved language preference on mount
-  useEffect(() => {
-    try {
-      const savedLanguage = localStorage.getItem('cortex-language');
-      if (savedLanguage && (savedLanguage === 'no' || savedLanguage === 'en')) {
-        setLanguage(savedLanguage);
-      }
-    } catch (error) {
-      console.warn('Could not load language preference:', error);
+      console.warn('Could not change language:', error);
     }
   }, []);
 
@@ -66,11 +78,20 @@ export default function App() {
   // Dummy-toleranse
   const tolerance = useMemo(() => 0.7, []);
 
-  // Memoize translations to prevent unnecessary recalculation
-  const t = useMemo(() => translations[language], [language]);
-
   // Memoize anomaly count for dashboard
   const anomalyCount = useMemo(() => anomalies.length, [anomalies.length]);
+
+  // Show loading state while i18n initializes
+  if (!i18nInitialized) {
+    return (
+      <div className="min-h-screen bg-gray-950 text-gray-100 font-sans flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-teal-500 mx-auto mb-4"></div>
+          <p className="text-xl">Loading CoreTex...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 font-sans pb-8">
@@ -83,8 +104,8 @@ export default function App() {
             e.target.style.display = 'none';
           }}
         />
-        <h1 className="text-3xl font-bold tracking-wide mb-1">{t.title}</h1>
-        <div className="text-teal-200">{t.description}</div>
+        <h1 className="text-3xl font-bold tracking-wide mb-1">{i18n.t('title', 'CORTEX')}</h1>
+        <div className="text-teal-200">{i18n.t('description', 'Advanced security system')}</div>
       </header>
       
       <main className="max-w-2xl mx-auto mt-6 px-4">
@@ -110,7 +131,7 @@ export default function App() {
       </main>
       
       <footer className="text-center text-xs text-gray-400 mt-8">
-        © 2025 CORTEX – {t.footer}
+        © 2025 CORTEX – {i18n.t('footer', 'Advanced security system')}
       </footer>
     </div>
   );

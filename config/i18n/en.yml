@@ -1,0 +1,37 @@
+# English translations for CoreTex
+# Language: English (en)
+
+title: "CORTEX – Real-time Anomaly Detection"
+description: "Detect threats and irregularities in real time. Security at the highest level."
+footer: "A project to safeguard organizations from anomalies and threats."
+
+# Dashboard translations
+dashboard:
+  title: "System Dashboard"
+  uptime: "System Uptime"
+  users: "Active Users"
+  lastReport: "Last Report"
+  anomalies: "Anomalies Detected"
+
+# Face Recognition translations
+faceRecognition:
+  title: "Face Recognition"
+  status: "Camera Status"
+  active: "Active"
+  inactive: "Inactive"
+  error: "Error"
+  starting: "Starting camera..."
+  noCamera: "No camera access"
+
+# Anomaly Log translations
+anomalyLog:
+  title: "Anomaly Log"
+  noAnomalies: "No anomalies detected"
+  time: "Time"
+  description: "Description"
+  type: "Type"
+
+# Language Switcher
+language:
+  switch: "Switch Language"
+  current: "Current Language"

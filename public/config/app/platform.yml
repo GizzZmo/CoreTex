@@ -1,0 +1,63 @@
+# Cross-platform deployment configuration
+# Contains platform-specific settings
+
+platforms:
+  windows:
+    paths:
+      separator: "\\"
+      config: "C:\\ProgramData\\CoreTex\\config"
+      logs: "C:\\ProgramData\\CoreTex\\logs"
+      temp: "%TEMP%\\cortex"
+    services:
+      name: "CoreTex-Service"
+      displayName: "CoreTex Anomaly Detection"
+      startType: "automatic"
+    registry:
+      key: "HKLM\\SOFTWARE\\CoreTex"
+    permissions:
+      user: "SYSTEM"
+      group: "Administrators"
+      
+  linux:
+    paths:
+      separator: "/"
+      config: "/etc/cortex"
+      logs: "/var/log/cortex"
+      temp: "/tmp/cortex"
+    services:
+      name: "cortex"
+      type: "systemd"
+      user: "cortex"
+      group: "cortex"
+    permissions:
+      mode: "0755"
+      owner: "cortex:cortex"
+      
+  macos:
+    paths:
+      separator: "/"
+      config: "/usr/local/etc/cortex"
+      logs: "/usr/local/var/log/cortex"
+      temp: "/tmp/cortex"
+    services:
+      name: "com.cortex.agent"
+      type: "launchd"
+      user: "_cortex"
+      group: "_cortex"
+    permissions:
+      mode: "0755"
+      owner: "_cortex:_cortex"
+
+shared:
+  configFiles:
+    - "app.yml"
+    - "environments/"
+    - "i18n/"
+  logFiles:
+    - "access.log"
+    - "error.log"
+    - "audit.log"
+  tempFiles:
+    - "cache/"
+    - "uploads/"
+    - "sessions/"

@@ -1,0 +1,51 @@
+# Application configuration
+# Main app settings and constants
+
+app:
+  name: "CoreTex"
+  fullName: "CORTEX – Real-time Anomaly Detection System"
+  version: "1.0.0"
+  author: "GizzZmo"
+  license: "MIT"
+
+ui:
+  theme: "cyberpunk"
+  defaultLanguage: "no"
+  supportedLanguages: ["no", "en"]
+  
+branding:
+  logo: "/assets/logo.png"
+  favicon: "/favicon.ico"
+  colors:
+    primary: "#0d9488"    # teal-600
+    secondary: "#64748b"  # slate-500
+    accent: "#06b6d4"     # cyan-500
+    background: "#0f172a" # slate-900
+    surface: "#1e293b"    # slate-800
+
+navigation:
+  showLogo: true
+  showTitle: true
+  showLanguageSwitcher: true
+
+components:
+  dashboard:
+    refreshInterval: 60000
+    showUptime: true
+    showUsers: true
+    showLastReport: true
+    
+  faceRecognition:
+    autoStart: true
+    showStatus: true
+    enableDetection: true
+    
+  anomalyLog:
+    maxVisible: 50
+    autoRefresh: true
+    groupByType: false
+
+defaults:
+  knownFaces: ["Ola", "Kari", "Per"]
+  toleranceLevel: 0.7
+  maxAnomalies: 100

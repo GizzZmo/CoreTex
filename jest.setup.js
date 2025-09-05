@@ -1,4 +1,10 @@
 import '@testing-library/jest-dom';
+import { setupConfigMocks } from './src/utils/testUtils';
+
+// Setup config mocks for all tests
+beforeAll(() => {
+  setupConfigMocks();
+});
 
 // Suppress deprecation warnings from testing library (known issue)
 const originalConsoleError = console.error;

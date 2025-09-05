@@ -1,0 +1,37 @@
+# Norwegian translations for CoreTex
+# Language: Norwegian (no)
+
+title: "CORTEX – Sanntids avviksdeteksjon"
+description: "Oppdag trusler og uregelmessigheter i sanntid. Sikkerhet på høyeste nivå."
+footer: "Et prosjekt for å beskytte virksomheter mot avvik og trusler."
+
+# Dashboard translations
+dashboard:
+  title: "Systemdashboard"
+  uptime: "Systemets oppetid"
+  users: "Aktive brukere"
+  lastReport: "Siste rapport"
+  anomalies: "Avvik oppdaget"
+
+# Face Recognition translations
+faceRecognition:
+  title: "Ansiktsgjenkjenning"
+  status: "Kamerastatus"
+  active: "Aktiv"
+  inactive: "Inaktiv"
+  error: "Feil"
+  starting: "Starter kamera..."
+  noCamera: "Ingen kameratilgang"
+
+# Anomaly Log translations
+anomalyLog:
+  title: "Avvikslogg"
+  noAnomalies: "Ingen avvik oppdaget"
+  time: "Tid"
+  description: "Beskrivelse"
+  type: "Type"
+
+# Language Switcher
+language:
+  switch: "Bytt språk"
+  current: "Nåværende språk"
