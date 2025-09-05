@@ -1,84 +1,257 @@
-The `index.html` file is a comprehensive HTML document for the "CORTEX Anomaly Detection" application. Here's an explanation of its structure and functionality:
+# CORTEX - Anomaly Detection System
 
-### General Overview:
-- **Purpose**: This file is the main interface for a cyberpunk-inspired anomaly detection application. It utilizes AI and facial recognition technologies.
-- **Key Features**:
-  - Real-time video feed with face and anomaly detection.
-  - User interaction through buttons and settings.
-  - Integration with AI models and Google API for advanced functionality.
+A cyberpunk-inspired facial recognition and anomaly detection application built with React. The system provides real-time monitoring, face recognition capabilities, and comprehensive anomaly logging with a futuristic user interface.
+
+## 🚀 Features
+
+- **Real-time Face Recognition**: Advanced facial detection and recognition using webcam feed
+- **Anomaly Detection**: Comprehensive anomaly logging and monitoring system
+- **Multi-language Support**: Norwegian and English language support
+- **Cyberpunk UI**: Futuristic dark theme with neon accents
+- **Performance Optimized**: React.memo, useCallback, and useMemo for optimal performance
+- **Responsive Design**: Works on desktop and mobile devices
+- **Error Handling**: Robust error handling with user-friendly messages
+- **Real-time Dashboard**: Live statistics and system monitoring
+
+## 📋 Prerequisites
+
+- Node.js (version 14 or higher)
+- npm or yarn
+- Modern web browser with camera access
+- Camera/webcam for face recognition features
+
+## 🛠️ Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/GizzZmo/CoreTex.git
+   cd CoreTex
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Start the development server**
+   ```bash
+   npm start
+   ```
+
+4. **Open in browser**
+   Navigate to `http://localhost:3000` in your web browser
+
+## 🧪 Testing
+
+Run the test suite:
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:ci
+```
+
+## 📁 Project Structure
+
+```
+CoreTex/
+├── src/
+│   ├── components/          # React components
+│   │   ├── Dashboard.jsx    # System statistics dashboard
+│   │   ├── FaceRecognition.jsx # Camera and face detection
+│   │   ├── AnomalyLog.jsx   # Anomaly display and logging
+│   │   └── LanguageSwitcher.jsx # Language selection
+│   ├── utils/               # Utility functions
+│   │   └── index.js         # Helper functions and validation
+│   ├── styles/              # CSS styles
+│   ├── i18n.js             # Internationalization
+│   ├── App.jsx             # Main application component
+│   └── main.js             # Application entry point
+├── tests/                   # Test files
+├── public/                  # Static assets
+├── index.html              # Standalone cyberpunk implementation
+└── package.json            # Dependencies and scripts
+```
+
+## 🎯 Component Overview
+
+### Dashboard
+Displays real-time system statistics including:
+- Anomaly count with color-coded status
+- System uptime with smart formatting
+- User count
+- Last report timestamp
+
+### FaceRecognition
+Handles camera operations and face detection:
+- Camera initialization with error handling
+- Real-time video feed display
+- Face detection simulation (ready for face-api.js integration)
+- Retry functionality for camera errors
+
+### AnomalyLog
+Manages anomaly display and logging:
+- Sortable anomaly list (newest first)
+- Color-coded anomaly types
+- Scrollable interface with max height
+- Empty state handling
+
+### LanguageSwitcher
+Provides multi-language support:
+- Norwegian and English languages
+- Persistent language preference (localStorage)
+- Accessible form controls
+
+## 🔧 Configuration
+
+### Camera Settings
+Camera constraints can be configured in `src/utils/index.js`:
+```javascript
+export const validateCameraConstraints = (constraints = {}) => {
+  return {
+    video: {
+      width: { ideal: 640 },
+      height: { ideal: 480 },
+      facingMode: "user",
+      ...constraints.video
+    }
+  };
+};
+```
+
+### Language Configuration
+Add new languages in `src/i18n.js`:
+```javascript
+export const translations = {
+  no: { /* Norwegian translations */ },
+  en: { /* English translations */ },
+  // Add new languages here
+};
+```
+
+## 🚀 Performance Optimizations
+
+The application includes several performance optimizations:
+
+- **React.memo**: All components use memo to prevent unnecessary re-renders
+- **useCallback**: Event handlers are memoized to prevent child re-renders
+- **useMemo**: Expensive calculations are memoized
+- **Efficient State Updates**: State updates are batched and optimized
+- **Memory Management**: Proper cleanup of camera streams and intervals
+
+## 🛡️ Error Handling
+
+Comprehensive error handling includes:
+- Camera access errors with user-friendly messages
+- Network error handling
+- Graceful fallbacks for missing features
+- Detailed error logging for development
+
+## 🎨 Styling
+
+The application uses:
+- **Tailwind CSS**: Utility-first CSS framework
+- **Custom CSS**: Cyberpunk theme with neon effects
+- **Responsive Design**: Mobile-first approach
+- **Dark Theme**: Optimized for low-light environments
+
+## 🔐 Security Considerations
+
+- Camera access requires user permission
+- No data is transmitted without explicit user action
+- Local storage is used only for preferences
+- Input validation on all user inputs
+
+## 🚀 Deployment
+
+### Development
+```bash
+npm start
+```
+
+### Production Build
+```bash
+npm run build
+```
+
+### Docker (if configured)
+```bash
+docker build -t cortex .
+docker run -p 3000:3000 cortex
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Development Guidelines
+
+- Follow React best practices
+- Add tests for new functionality
+- Use TypeScript-style JSDoc comments
+- Follow the existing code style
+- Update documentation for new features
+
+## 🧪 Testing Strategy
+
+- **Unit Tests**: Individual component testing
+- **Integration Tests**: Component interaction testing
+- **Utility Tests**: Helper function validation
+- **Accessibility Tests**: ARIA compliance
+- **Performance Tests**: Memory and render optimization
+
+## 📈 Performance Monitoring
+
+Monitor application performance with:
+- React DevTools Profiler
+- Browser Performance tab
+- Memory usage monitoring
+- Network request optimization
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+**Camera not working:**
+- Check browser permissions
+- Ensure HTTPS (required for camera access)
+- Verify camera is not in use by another application
+
+**Tests failing:**
+- Run `npm install` to ensure dependencies are up to date
+- Clear Jest cache: `npx jest --clearCache`
+
+**Performance issues:**
+- Check React DevTools Profiler
+- Verify memo usage on components
+- Monitor state update frequency
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Face-api.js for facial recognition capabilities
+- Tailwind CSS for styling framework
+- React ecosystem for robust development tools
+- Cyberpunk aesthetic inspiration
+
+## 📞 Support
+
+For support and questions:
+- Open an issue on GitHub
+- Check the troubleshooting section
+- Review the component documentation
 
 ---
 
-### File Details:
-
-#### **1. Metadata and Styling**:
-- **HTML Metadata**:
-  - Language: Norwegian (`lang="no"`).
-  - Title: "CORTEX Anomaly Detector | Cyberpunk Ansiktsgjenkjenning".
-  - Description and Keywords: Highlight features like facial recognition, real-time AI, and biometrics.
-- **Styling**:
-  - Uses `Tailwind CSS` and a custom font (`Share Tech Mono`).
-  - Custom CSS defines a "cyberpunk" theme with neon colors, shadows, and animations.
-  - Includes classes like `.cyber-button` and `.cyber-border` for futuristic UI elements.
-
----
-
-#### **2. Layout**:
-- **Main Container**:
-  - A responsive, flexbox-based layout with a "cyber-border" effect.
-- **Video Section**:
-  - Displays real-time video feed (`<video>` tag).
-  - An overlay (`<canvas>`) is used for drawing detections.
-- **Control Panel**:
-  - Buttons for face registration, database export/import, behavior analysis, and anomaly reporting.
-  - File input for importing a database in `.json` format.
-- **Sidebar**:
-  - Sections for:
-    - API key input.
-    - Settings (e.g., recognition tolerance slider).
-    - Known individuals list.
-    - System log.
-    - Chat assistant for user interaction.
-
----
-
-#### **3. Modals**:
-- Multiple modals provide additional functionality:
-  - **Register New Individual**: Input a name for a new face.
-  - **Analysis Report**: Displays anomaly analysis.
-  - **Behavior Analysis**: Submits behavior data for advanced AI analysis.
-  - **Generate Phantom Image**: AI generates an image based on a textual description.
-
----
-
-#### **4. Scripts and Functionality**:
-- **Libraries Used**:
-  - `face-api.js`: AI-based face detection and recognition.
-  - Built-in Gemini API for advanced generative AI tasks.
-- **Functional Highlights**:
-  - `initialize()`: Loads AI models and starts the webcam.
-  - `detectFacesLoop()`: Continuously detects faces in the video feed and highlights anomalies.
-  - **Event Handlers**:
-    - API key saving and toggling advanced features.
-    - Behavior analysis and anomaly explanation using AI.
-    - Exporting and importing face data.
-    - Running "Gabriel" and "Rafael" protocols for database integrity and movement analysis.
-- **State Management**:
-  - Keeps track of known and unknown faces.
-  - Logs system activities and errors for the user.
-
----
-
-#### **5. Loading Screen**:
-- Initial "AI-core initialization" screen with a spinner and status messages.
-
-#### **6. Accessibility**:
-- Buttons and inputs are disabled/enabled based on conditions (e.g., API key availability).
-
-#### **Notable Visual and Functional Enhancements**:
-- Cyberpunk aesthetics with a neon palette.
-- Smooth animations and hover effects on buttons.
-- Detailed error handling and user feedback through logs.
-
-### Summary:
-This file serves as the front-end for a complex anomaly detection and facial recognition system, combining AI APIs with a visually engaging user interface. It’s designed for real-time interaction, with modular features like behavior analysis, data handling, and API integration.
+**Made with ❤️ for the future of security monitoring**
