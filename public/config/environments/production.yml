@@ -1,0 +1,40 @@
+# Production environment configuration
+# Environment: production
+
+app:
+  name: "CoreTex"
+  version: "1.0.0"
+  environment: "production"
+  debug: false
+  logLevel: "warn"
+
+api:
+  baseUrl: "https://api.cortex.domain.com"
+  timeout: 5000
+  retries: 5
+
+camera:
+  defaultResolution:
+    width: 1280
+    height: 720
+  maxFPS: 60
+  tolerance: 0.8
+
+anomalies:
+  maxCount: 1000
+  refreshInterval: 30000
+
+features:
+  faceRecognition: true
+  anomalyDetection: true
+  realTimeMonitoring: true
+  debugMode: false
+
+security:
+  enableCSP: true
+  allowedOrigins: []
+  
+performance:
+  enableCaching: true
+  bundleOptimization: true
+  lazyLoading: true

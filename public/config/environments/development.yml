@@ -1,0 +1,35 @@
+# Development environment configuration
+# Environment: development
+
+app:
+  name: "CoreTex"
+  version: "1.0.0"
+  environment: "development"
+  debug: true
+  logLevel: "debug"
+
+api:
+  baseUrl: "http://localhost:3001"
+  timeout: 10000
+  retries: 3
+
+camera:
+  defaultResolution:
+    width: 640
+    height: 480
+  maxFPS: 30
+  tolerance: 0.7
+
+anomalies:
+  maxCount: 100
+  refreshInterval: 60000
+
+features:
+  faceRecognition: true
+  anomalyDetection: true
+  realTimeMonitoring: true
+  debugMode: true
+
+security:
+  enableCSP: false
+  allowedOrigins: ["http://localhost:3000"]
