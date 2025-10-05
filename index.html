@@ -12,6 +12,7 @@ Visualization & Content Choices:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://generativelanguage.googleapis.com https://api.github.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; media-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com https://api.github.com;">
     
     <title>CORTEX Anomaly Detector | Cyberpunk Ansiktsgjenkjenning</title>
     <meta name="description" content="En cyberpunk-inspirert ansiktsgjenkjenning-app som bruker en full suite av AI-funksjoner, inkludert en innebygd hjelpeseksjon.">
@@ -129,33 +130,33 @@ Visualization & Content Choices:
             <div>
                  <h2 class="text-lg text-[var(--secondary-color)] cyber-shadow-secondary border-b border-[var(--secondary-color)] pb-2 mb-2">API NØKKEL</h2>
                  <div class="flex gap-2">
-                    <input type="password" id="api-key-input" placeholder="Lim inn din Google API Nøkkel" class="bg-[#222] border border-[var(--primary-color)] text-[var(--primary-color)] p-1 w-full font-mono text-xs">
-                    <button id="save-api-key-btn" class="cyber-button px-2 text-sm">LAGRE</button>
+                    <input type="password" id="api-key-input" placeholder="Lim inn din Google API Nøkkel" class="bg-[#222] border border-[var(--primary-color)] text-[var(--primary-color)] p-1 w-full font-mono text-xs" aria-label="Google API nøkkel">
+                    <button id="save-api-key-btn" class="cyber-button px-2 text-sm" aria-label="Lagre API nøkkel">LAGRE</button>
                  </div>
             </div>
             <div>
                  <h2 class="text-lg text-[var(--secondary-color)] cyber-shadow-secondary border-b border-[var(--secondary-color)] pb-2 mb-2">INNSTILLINGER</h2>
                  <label for="tolerance-slider" class="text-sm">Gjenkjenningstoleranse: <span id="tolerance-value">0.6</span></label>
-                 <input type="range" id="tolerance-slider" min="0.3" max="0.7" value="0.6" step="0.05" class="w-full mt-1">
+                 <input type="range" id="tolerance-slider" min="0.3" max="0.7" value="0.6" step="0.05" class="w-full mt-1" aria-label="Gjenkjenningstoleranse">
                  <label for="interval-input" class="text-sm mt-2 block">Sekvens-intervall (ms):</label>
-                 <input type="number" id="interval-input" value="500" min="100" max="2000" step="100" class="bg-[#222] border border-[var(--primary-color)] text-[var(--primary-color)] p-1 w-full font-mono text-xs mt-1">
+                 <input type="number" id="interval-input" value="500" min="100" max="2000" step="100" class="bg-[#222] border border-[var(--primary-color)] text-[var(--primary-color)] p-1 w-full font-mono text-xs mt-1" aria-label="Sekvens-intervall i millisekunder">
                  <div id="camera-selector-container" class="hidden mt-2">
                      <label for="camera-select" class="text-sm block">KAMERAVALGSYSTEM:</label>
-                     <select id="camera-select" class="bg-[#222] border border-[var(--primary-color)] text-[var(--primary-color)] p-1 w-full font-mono text-xs mt-1"></select>
+                     <select id="camera-select" class="bg-[#222] border border-[var(--primary-color)] text-[var(--primary-color)] p-1 w-full font-mono text-xs mt-1" aria-label="Velg kamera"></select>
                  </div>
                  <div class="mt-2 flex items-center justify-between">
                      <label for="night-vision-toggle" class="text-sm">MØRKESYN:</label>
-                     <button id="night-vision-toggle" class="cyber-button px-3 py-1 text-xs" data-active="false">AV</button>
+                     <button id="night-vision-toggle" class="cyber-button px-3 py-1 text-xs" data-active="false" aria-label="Slå på eller av mørkesyn" aria-pressed="false">AV</button>
                  </div>
             </div>
             <div>
                  <h2 class="text-lg text-[var(--secondary-color)] cyber-shadow-secondary border-b border-[var(--secondary-color)] pb-2 mb-2">AI-PROTOKOLLER</h2>
                  <div class="grid grid-cols-2 lg:grid-cols-2 gap-2">
-                     <button id="gabriel-btn" class="cyber-button py-2 uppercase text-xs">GABRIEL</button>
-                     <button id="rafael-btn" class="cyber-button py-2 uppercase text-xs" disabled>RAFAEL</button>
-                     <button id="metatron-btn" class="cyber-button py-2 uppercase text-xs" disabled>METATRON</button>
-                     <button id="uriel-btn" class="cyber-button py-2 uppercase text-xs" disabled>URIEL</button>
-                     <button id="sandalphon-btn" class="cyber-button col-span-2 lg:col-span-2 py-2 uppercase text-xs" disabled>SANDALPHON</button>
+                     <button id="gabriel-btn" class="cyber-button py-2 uppercase text-xs" aria-label="Start GABRIEL protokoll">GABRIEL</button>
+                     <button id="rafael-btn" class="cyber-button py-2 uppercase text-xs" disabled aria-label="Start RAFAEL protokoll (krever API nøkkel)">RAFAEL</button>
+                     <button id="metatron-btn" class="cyber-button py-2 uppercase text-xs" disabled aria-label="Start METATRON protokoll (krever API nøkkel)">METATRON</button>
+                     <button id="uriel-btn" class="cyber-button py-2 uppercase text-xs" disabled aria-label="Start URIEL protokoll (krever API nøkkel)">URIEL</button>
+                     <button id="sandalphon-btn" class="cyber-button col-span-2 lg:col-span-2 py-2 uppercase text-xs" disabled aria-label="Start SANDALPHON protokoll (krever API nøkkel)">SANDALPHON</button>
                  </div>
             </div>
             <div>
@@ -438,6 +439,7 @@ Visualization & Content Choices:
                 if (nightVisionActive) {
                     nightVisionToggle.textContent = 'PÅ';
                     nightVisionToggle.dataset.active = 'true';
+                    nightVisionToggle.setAttribute('aria-pressed', 'true');
                     nightVisionCanvas.classList.remove('hidden');
                     video.style.display = 'none';
                     startNightVisionRendering();
@@ -445,6 +447,7 @@ Visualization & Content Choices:
                 } else {
                     nightVisionToggle.textContent = 'AV';
                     nightVisionToggle.dataset.active = 'false';
+                    nightVisionToggle.setAttribute('aria-pressed', 'false');
                     nightVisionCanvas.classList.add('hidden');
                     video.style.display = 'block';
                     stopNightVisionRendering();
@@ -617,6 +620,53 @@ Visualization & Content Choices:
             let githubRepoName = '';
             let isGithubConnected = false;
 
+            // --- Security Functions ---
+            
+            /**
+             * Sanitize HTML to prevent XSS attacks
+             * @param {string} html - HTML string to sanitize
+             * @returns {string} Sanitized HTML string
+             */
+            function sanitizeHTML(html) {
+                const div = document.createElement('div');
+                div.textContent = html;
+                return div.innerHTML;
+            }
+            
+            /**
+             * Safely set HTML content with sanitization
+             * @param {HTMLElement} element - Element to set content on
+             * @param {string} content - Content to set (will be sanitized)
+             */
+            function safeSetHTML(element, content) {
+                // Create a temporary div to parse and sanitize
+                const temp = document.createElement('div');
+                temp.innerHTML = content;
+                
+                // Remove potentially dangerous elements
+                const dangerousTags = ['script', 'iframe', 'object', 'embed'];
+                dangerousTags.forEach(tag => {
+                    const elements = temp.getElementsByTagName(tag);
+                    while (elements.length > 0) {
+                        elements[0].parentNode.removeChild(elements[0]);
+                    }
+                });
+                
+                // Remove event handlers
+                const allElements = temp.getElementsByTagName('*');
+                for (let i = 0; i < allElements.length; i++) {
+                    const attrs = allElements[i].attributes;
+                    for (let j = attrs.length - 1; j >= 0; j--) {
+                        const attrName = attrs[j].name;
+                        if (attrName.startsWith('on')) {
+                            allElements[i].removeAttribute(attrName);
+                        }
+                    }
+                }
+                
+                element.innerHTML = temp.innerHTML;
+            }
+
             // --- All functions are restored here... ---
             
             function addLog(message, type = 'system') {
@@ -749,7 +799,7 @@ Visualization & Content Choices:
                         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     }
                 } catch (error) {
-                    addLog(`GitHub autentisering feilet: ${error.message}`, 'anomaly');
+                    addLog(`GitHub autentisering feilet: ${getSafeErrorMessage(error)}`, 'anomaly');
                     githubTokenInput.value = '';
                 }
             }
@@ -804,7 +854,7 @@ Visualization & Content Choices:
                     await initializeRepoStructure();
                     
                 } catch (error) {
-                    addLog(`Repository oppsett feilet: ${error.message}`, 'anomaly');
+                    addLog(`Repository oppsett feilet: ${getSafeErrorMessage(error)}`, 'anomaly');
                 }
             }
 
@@ -878,7 +928,7 @@ Visualization & Content Choices:
                     addLog('GitHub synkronisering fullført.', 'known');
                     
                 } catch (error) {
-                    addLog(`GitHub synkronisering feilet: ${error.message}`, 'anomaly');
+                    addLog(`GitHub synkronisering feilet: ${getSafeErrorMessage(error)}`, 'anomaly');
                 }
             }
 
@@ -982,7 +1032,18 @@ Visualization & Content Choices:
                 return true;
             }
 
-            const createLoader = (text = 'Prosesserer...') => `<div class="flex flex-col items-center justify-center h-full"><div class="spinner"></div><p class="mt-4">${text}</p></div>`;
+            const createLoader = (text = 'Prosesserer...') => `<div class="flex flex-col items-center justify-center h-full"><div class="spinner"></div><p class="mt-4">${sanitizeHTML(text)}</p></div>`;
+            
+            /**
+             * Safely display error message
+             * @param {Error} error - Error object
+             * @returns {string} Sanitized error message
+             */
+            function getSafeErrorMessage(error) {
+                if (!error) return 'Ukjent feil';
+                const message = error.message || 'Ukjent feil';
+                return sanitizeHTML(message);
+            }
             
             async function callGeminiAPI(prompt, images = [], schema = null) {
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${userApiKey}`;
@@ -1034,7 +1095,7 @@ Visualization & Content Choices:
                     const responseText = await callGeminiAPI(prompt, []);
                     summaryContent.innerHTML = responseText.replace(/# (.+)/g, '<h3>$1</h3>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\* (.+)/g, '<li class="ml-4 list-disc">$1</li>').replace(/(\n)/g, '<br>');
                 } catch (error) {
-                    summaryContent.innerHTML = `<p class="text-[var(--danger-color)]">FEIL under generering av logg-sammendrag: ${error.message}</p>`;
+                    summaryContent.innerHTML = `<p class="text-[var(--danger-color)]">FEIL under generering av logg-sammendrag: ${getSafeErrorMessage(error)}</p>`;
                 }
             }
             
@@ -1047,7 +1108,7 @@ Visualization & Content Choices:
                     const responseText = await callGeminiAPI(prompt, []);
                     reportContent.innerHTML = responseText.replace(/# (.+)/g, '<h3>$1</h3>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\* (.+)/g, '<li>$1</li>').replace(/(\n)/g, '<br>');
                 } catch (error) {
-                    reportContent.innerHTML = `<p class="text-[var(--danger-color)]">FEIL: Kunne ikke koble til Gemini. <br><br>${error.message}</p>`;
+                    reportContent.innerHTML = `<p class="text-[var(--danger-color)]">FEIL: Kunne ikke koble til Gemini. <br><br>${getSafeErrorMessage(error)}</p>`;
                 }
             }
 
@@ -1059,7 +1120,7 @@ Visualization & Content Choices:
                     const responseText = await callGeminiAPI(prompt, []);
                     anomalyExplanationEl.innerHTML = responseText.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\* (.+)/g, '<li class="ml-4 list-disc">$1</li>').replace(/(\n)/g, '<br>');
                 } catch (error) {
-                    anomalyExplanationEl.innerHTML = `<p class="text-[var(--danger-color)]">Kunne ikke hente anbefalinger: ${error.message}</p>`;
+                    anomalyExplanationEl.innerHTML = `<p class="text-[var(--danger-color)]">Kunne ikke hente anbefalinger: ${getSafeErrorMessage(error)}</p>`;
                 }
             }
 
@@ -1111,7 +1172,7 @@ Visualization & Content Choices:
                     }
 
                 } catch (error) {
-                    behaviorContent.innerHTML = `<p class="text-[var(--danger-color)]">FEIL under JSON-subjektanalyse. <br><br>${error.message}</p>`;
+                    behaviorContent.innerHTML = `<p class="text-[var(--danger-color)]">FEIL under JSON-subjektanalyse. <br><br>${getSafeErrorMessage(error)}</p>`;
                     addLog('Subjektanalyse (JSON) feilet kritisk.', 'anomaly');
                 }
             }
@@ -1147,7 +1208,7 @@ Visualization & Content Choices:
                         addLog('Fantombilde generert.', 'known');
                     } else { throw new Error("Uventet svarformat fra Imagen."); }
                 } catch(error) {
-                    addLog(`FEIL ved bildegenerering: ${error.message}`, 'anomaly');
+                    addLog(`FEIL ved bildegenerering: ${getSafeErrorMessage(error)}`, 'anomaly');
                     imagenDisplay.innerHTML = `<span class="text-[var(--danger-color)]">Kunne ikke generere bilde.</span>`;
                 }
             }
@@ -1176,7 +1237,7 @@ Visualization & Content Choices:
                     displayChatMessage(response.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\* (.+)/g, '<li>$1</li>').replace(/(\n)/g, '<br>'), 'assistant');
                 } catch (error) {
                     thinkingEl.remove();
-                    displayChatMessage(`<span class="text-[var(--danger-color)]">Systemfeil i assistent-modul: ${error.message}</span>`, 'assistant');
+                    displayChatMessage(`<span class="text-[var(--danger-color)]">Systemfeil i assistent-modul: ${getSafeErrorMessage(error)}</span>`, 'assistant');
                 }
             }
 
@@ -1215,7 +1276,7 @@ Visualization & Content Choices:
                     const responseText = await callGeminiAPI(prompt, imageSequence);
                     protocolContent.innerHTML = responseText.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\* (.+)/g, '<li class="ml-4 list-disc">$1</li>').replace(/(\n)/g, '<br>');
                 } catch (error) {
-                    protocolContent.innerHTML = `<p class="text-[var(--danger-color)]">FEIL under transportanalyse: ${error.message}</p>`;
+                    protocolContent.innerHTML = `<p class="text-[var(--danger-color)]">FEIL under transportanalyse: ${getSafeErrorMessage(error)}</p>`;
                 }
             }
             
@@ -1240,7 +1301,7 @@ Visualization & Content Choices:
                     const responseText = await callGeminiAPI(prompt, [base64ImageData]);
                     protocolContent.innerHTML = responseText.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\* (.+)/g, '<li class="ml-4 list-disc">$1</li>').replace(/(\n)/g, '<br>');
                 } catch (error) {
-                    protocolContent.innerHTML = `<p class="text-[var(--danger-color)]">FEIL under omgivelsesanalyse: ${error.message}</p>`;
+                    protocolContent.innerHTML = `<p class="text-[var(--danger-color)]">FEIL under omgivelsesanalyse: ${getSafeErrorMessage(error)}</p>`;
                 }
             }
             
@@ -1267,7 +1328,7 @@ Visualization & Content Choices:
                     protocolContent.innerHTML = responseText.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\* (.+)/g, '<li class="ml-4 list-disc">$1</li>').replace(/(\n)/g, '<br>');
                     addLog('Sandalphon-analyse fullført.', 'known');
                 } catch (error) {
-                    protocolContent.innerHTML = `<p class="text-[var(--danger-color)]">FEIL under interaksjonsanalyse: ${error.message}</p>`;
+                    protocolContent.innerHTML = `<p class="text-[var(--danger-color)]">FEIL under interaksjonsanalyse: ${getSafeErrorMessage(error)}</p>`;
                     addLog('Sandalphon-protokoll feilet.', 'anomaly');
                 }
             }
@@ -1319,8 +1380,8 @@ Visualization & Content Choices:
                     setTimeout(() => { confidenceBar.style.width = `${confidencePercent}%`; }, 100);
                     addLog(`METATRON Prediksjon: ${data.prediction_text} (Konfidens: ${confidencePercent}%)`, 'known');
                 } catch (error) {
-                    metatronPredictionContent.innerHTML = `<p class="text-[var(--danger-color)]">FEIL under prediktiv analyse: ${error.message}</p>`;
-                    addLog(`METATRON-protokoll feilet: ${error.message}`, 'anomaly');
+                    metatronPredictionContent.innerHTML = `<p class="text-[var(--danger-color)]">FEIL under prediktiv analyse: ${getSafeErrorMessage(error)}</p>`;
+                    addLog(`METATRON-protokoll feilet: ${getSafeErrorMessage(error)}`, 'anomaly');
                 }
             }
             
@@ -1386,7 +1447,15 @@ Visualization & Content Choices:
             saveApiKeyBtn.addEventListener('click', () => {
                 const key = apiKeyInput.value.trim();
                 if (key) {
+                    // Basic validation for API key format
+                    if (key.length < 20) {
+                        addLog('API Nøkkel ser ut til å være ugyldig (for kort).', 'anomaly');
+                        return;
+                    }
                     userApiKey = key;
+                    // Clear the input field for security
+                    apiKeyInput.value = '';
+                    apiKeyInput.type = 'password';
                     addLog('API Nøkkel lagret og AI-funksjoner aktivert.', 'known');
                     behaviorBtn.disabled = false;
                     reportBtn.disabled = false;
@@ -1430,7 +1499,7 @@ Visualization & Content Choices:
                     modalBackdrop.classList.add('hidden');
                     nameInput.value = '';
                     lastCapturedDescriptor = null;
-                } catch (error) { addLog(`KRITISK LAGRINGSFEIL: ${error.message}`, 'anomaly'); }
+                } catch (error) { addLog(`KRITISK LAGRINGSFEIL: ${getSafeErrorMessage(error)}`, 'anomaly'); }
             });
             
             saveUnknownBtn.addEventListener('click', () => {
@@ -1458,6 +1527,22 @@ Visualization & Content Choices:
             loadInput.addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
+                
+                // Validate file type
+                if (!file.name.endsWith('.json')) {
+                    addLog('FEIL: Kun JSON-filer er tillatt.', 'anomaly');
+                    e.target.value = '';
+                    return;
+                }
+                
+                // Validate file size (max 10MB)
+                const maxSize = 10 * 1024 * 1024; // 10MB
+                if (file.size > maxSize) {
+                    addLog('FEIL: Filen er for stor (maks 10MB).', 'anomaly');
+                    e.target.value = '';
+                    return;
+                }
+                
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     try {
@@ -1468,10 +1553,22 @@ Visualization & Content Choices:
                         updateFaceMatcher();
                         addLog(`${newData.length} nye individer lagt til i databasen fra fil.`, 'known');
                     } catch (err) {
-                        addLog('FEIL: Kunne ikke lese fil.', 'anomaly');
+                        addLog(`FEIL: Kunne ikke lese fil: ${getSafeErrorMessage(err)}`, 'anomaly');
                     } finally { e.target.value = ''; }
                 };
                 reader.readAsText(file);
+            });
+            
+            // Add validation for interval input
+            intervalInput.addEventListener('change', (e) => {
+                const value = parseInt(e.target.value, 10);
+                const min = parseInt(e.target.min, 10);
+                const max = parseInt(e.target.max, 10);
+                
+                if (isNaN(value) || value < min || value > max) {
+                    e.target.value = 500; // Reset to default
+                    addLog(`Ugyldig intervall-verdi. Må være mellom ${min} og ${max} ms.`, 'anomaly');
+                }
             });
             
             video.addEventListener('play', () => {
