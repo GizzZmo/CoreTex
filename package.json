@@ -57,7 +57,7 @@
     ]
   },
   "dependencies": {
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^4.1.1",
     "prop-types": "^15.8.1"
   }
 }
