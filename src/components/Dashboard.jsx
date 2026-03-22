@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { formatUptime, formatTimestamp } from "../utils";
 
 // Dashboard viser sanntidsstatistikk og nøkkeltall for ledelse/bruker
-const Dashboard = memo(function Dashboard({ anomalies, uptime, users, lastReport }) {
+const Dashboard = memo(function Dashboard({ anomalies, uptime, users, lastReport = null }) {
   return (
     <section className="dashboard bg-gray-900 text-teal-300 p-6 rounded-lg shadow-lg mb-4">
       <h2 className="text-2xl mb-4 font-bold tracking-wide">Dashboard</h2>
@@ -36,10 +36,6 @@ Dashboard.propTypes = {
   uptime: PropTypes.number.isRequired,
   users: PropTypes.number.isRequired,
   lastReport: PropTypes.string,
-};
-
-Dashboard.defaultProps = {
-  lastReport: null,
 };
 
 export default Dashboard;
