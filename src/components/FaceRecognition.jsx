@@ -27,6 +27,9 @@ const FaceRecognition = memo(function FaceRecognition({ onDetect, tolerance, kno
 
       // Request camera with validated constraints
       const constraints = validateCameraConstraints();
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera API not available in this environment');
+      }
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
       
